@@ -11,6 +11,7 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 int main(void)
 {
+	// demarrage port USB
 	const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 	uint32_t dtr = 0;
 	if (usb_enable(NULL)) {
@@ -53,19 +54,20 @@ int main(void)
 	struct sensor_value val_pressure;
 	struct sensor_value val_temperature;
 	struct sensor_value val_humidity;
-	struct sensor_value acc[3], gyr[3], mag[3];
+	struct sensor_value acc[3], gyr[3];
+	// struct sensor_value mag[3];
 
 	struct sensor_value full_scale, sampling_freq, oversampling;
-
-	// while (!device_is_ready(sensor_magfield)) {
-	// 	printf("Device %s is not ready\n", sensor_magfield->name);
-	// 	k_sleep(K_SECONDS(1));
-	// }
 	
 	while (!device_is_ready(sensor_acceleration)) {
 		printk("Device %s is not ready\n", sensor_acceleration->name);
 		k_sleep(K_SECONDS(1));
 	}
+
+	// while (!device_is_ready(sensor_magfield)) {
+	// 	printf("Device %s is not ready\n", sensor_magfield->name);
+	// 	k_sleep(K_SECONDS(1));
+	// }
 
 	
 
@@ -118,7 +120,6 @@ int main(void)
 			LOG_ERR("failed to get humidity: %d", ret);
 		}
 
-
 		ret = sensor_sample_fetch(sensor_acceleration);
 		if(ret != 0) {
 			LOG_ERR("failed to fetch acceleration sensor: %d", ret);
@@ -135,12 +136,9 @@ int main(void)
 		// ret = sensor_sample_fetch(sensor_magfield);
 		// ret = sensor_channel_get(sensor_magfield, SENSOR_CHAN_MAGN_XYZ, mag);
 
-
 		printk("AX: %d.%06d; AY: %d.%06d; AZ: %d.%06d;\n", acc[0].val1, acc[0].val2, acc[1].val1, acc[1].val2, acc[2].val1, acc[2].val2);
 		printk("GX: %d.%06d; GY: %d.%06d; GZ: %d.%06d;\n", gyr[0].val1, gyr[0].val2, gyr[1].val1, gyr[1].val2, gyr[2].val1, gyr[2].val2);
 		// printk("MX: %d.%06d; MY: %d.%06d; MZ: %d.%06d;\n", mag[0].val1, mag[0].val2, mag[1].val1, mag[1].val2, mag[2].val1, mag[2].val2);
-
-
 		printk("pressure: %d kPa\n", val_pressure.val1);
 		printk("temperature: %d *C\n", val_temperature.val1);
 		printk("humidity: %d \n", val_humidity.val1);
