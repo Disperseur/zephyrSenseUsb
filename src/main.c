@@ -5,10 +5,9 @@
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/logging/log.h>
 
-
-#define DEBUG
-
+LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 int main(void)
 {
@@ -33,6 +32,13 @@ int main(void)
         return -1;
     }
 
+	// const struct device *sensor_magfield = DEVICE_DT_GET_ONE(bosch_bmm150);
+    // if (sensor_magfield == NULL) {
+    //     return -1;
+    // }
+
+	
+
 	/* Poll if the DTR flag was set */
 	while (!dtr) {
 		uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
@@ -42,24 +48,28 @@ int main(void)
 
 	
 
-#ifdef DEBUG
-	printk("Debug session started\n");
-	printk("(DBG) sensor_acceleration == NULL : %d\n", sensor_acceleration == NULL);
-#endif
 
 
 	struct sensor_value val_pressure;
 	struct sensor_value val_temperature;
 	struct sensor_value val_humidity;
-	struct sensor_value acc[3], gyr[3];
+	struct sensor_value acc[3], gyr[3], mag[3];
 
 	struct sensor_value full_scale, sampling_freq, oversampling;
 
+	// while (!device_is_ready(sensor_magfield)) {
+	// 	printf("Device %s is not ready\n", sensor_magfield->name);
+	// 	k_sleep(K_SECONDS(1));
+	// }
+	
 	while (!device_is_ready(sensor_acceleration)) {
-		printf("Device %s is not ready\n", sensor_acceleration->name);
+		printk("Device %s is not ready\n", sensor_acceleration->name);
 		k_sleep(K_SECONDS(1));
 	}
 
+	
+
+	// config acc sensor
 	full_scale.val1 = 2;            /* G */
 	full_scale.val2 = 0;
 	sampling_freq.val1 = 100;       /* Hz. Performance mode */
@@ -87,20 +97,49 @@ int main(void)
     
 	while (1) {
     	ret = sensor_sample_fetch(sensor_pressure);
+		if(ret != 0) {
+			LOG_ERR("failed to fetch pressure sensor: %d", ret);
+		}
 		ret = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
+		if(ret != 0) {
+			LOG_ERR("failed to get pressure: %d", ret);
+		}
 
 		ret = sensor_sample_fetch(sensor_temperature);
+		if(ret != 0) {
+			LOG_ERR("failed to fetch temperature sensor: %d", ret);
+		}
 		ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
+		if(ret != 0) {
+			LOG_ERR("failed to get temperature: %d", ret);
+		}
 		ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
+		if(ret != 0) {
+			LOG_ERR("failed to get humidity: %d", ret);
+		}
 
 
 		ret = sensor_sample_fetch(sensor_acceleration);
-
+		if(ret != 0) {
+			LOG_ERR("failed to fetch acceleration sensor: %d", ret);
+		}
 		ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
+		if(ret != 0) {
+			LOG_ERR("failed to get acc: %d", ret);
+		}
 		ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
+		if(ret != 0) {
+			LOG_ERR("failed to get gyr: %d", ret);
+		}
+
+		// ret = sensor_sample_fetch(sensor_magfield);
+		// ret = sensor_channel_get(sensor_magfield, SENSOR_CHAN_MAGN_XYZ, mag);
+
 
 		printk("AX: %d.%06d; AY: %d.%06d; AZ: %d.%06d;\n", acc[0].val1, acc[0].val2, acc[1].val1, acc[1].val2, acc[2].val1, acc[2].val2);
 		printk("GX: %d.%06d; GY: %d.%06d; GZ: %d.%06d;\n", gyr[0].val1, gyr[0].val2, gyr[1].val1, gyr[1].val2, gyr[2].val1, gyr[2].val2);
+		// printk("MX: %d.%06d; MY: %d.%06d; MZ: %d.%06d;\n", mag[0].val1, mag[0].val2, mag[1].val1, mag[1].val2, mag[2].val1, mag[2].val2);
+
 
 		printk("pressure: %d kPa\n", val_pressure.val1);
 		printk("temperature: %d *C\n", val_temperature.val1);
