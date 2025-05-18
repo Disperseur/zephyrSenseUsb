@@ -12,6 +12,9 @@
 
 #define LED1_NODE DT_ALIAS(led1)
 
+#define STACKSIZE (2048)
+
+
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 
@@ -36,29 +39,45 @@ typedef struct _data_t {
 	gyro_t  gyro;
 } data_t;
 
+data_t sensors_data;
+const struct device *sensor_pressure;
+const struct device *sensor_temperature;
+const struct device *sensor_acceleration;
+struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+
+void sensor_routine(void*, void*, void*);
+void communication_routine(void*, void*, void*);
+
+const struct device *dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+
+
+K_THREAD_STACK_DEFINE(threadSensors_stack_area, STACKSIZE);
+static struct k_thread threadSensors_data;
+
+K_THREAD_STACK_DEFINE(threadCommunication_stack_area, STACKSIZE);
+static struct k_thread threadCommunication_data;
 
 int main(void)
 {
 	// config capteurs et console
-	static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
 
-	const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+	
 	uint32_t dtr = 0;
 	if (usb_enable(NULL)) {
 		return 0;
 	}
 
-	const struct device *sensor_pressure = DEVICE_DT_GET_ONE(st_lps22hb_press);
+	sensor_pressure = DEVICE_DT_GET_ONE(st_lps22hb_press);
     if (sensor_pressure == NULL) {
         return -1;
     }
 
-	const struct device *sensor_temperature = DEVICE_DT_GET_ONE(renesas_hs300x);
+	sensor_temperature = DEVICE_DT_GET_ONE(renesas_hs300x);
     if (sensor_temperature == NULL) {
         return -1;
     }
 
-	const struct device *sensor_acceleration = DEVICE_DT_GET_ONE(bosch_bmi270);
+	sensor_acceleration = DEVICE_DT_GET_ONE(bosch_bmi270);
     if (sensor_acceleration == NULL) {
         return -1;
     }
@@ -105,12 +124,8 @@ int main(void)
 	
 
 
-	data_t sensors_data;
-	struct sensor_value val_pressure;
-	struct sensor_value val_temperature;
-	struct sensor_value val_humidity;
-	struct sensor_value acc[3], gyr[3];
-	// struct sensor_value mag[3];
+	
+	
 
 	struct sensor_value full_scale, sampling_freq, oversampling;
 	
@@ -145,6 +160,38 @@ int main(void)
 		return 0;
 	}
     
+
+
+	k_tid_t tid1 = k_thread_create(&threadSensors_data, threadSensors_stack_area,
+			STACKSIZE, sensor_routine, NULL, NULL, NULL,
+			7, 0, K_NO_WAIT);
+
+	k_thread_name_set(tid1, "thread_sensors");
+
+
+	k_tid_t tid2 = k_thread_create(&threadCommunication_data, threadCommunication_stack_area,
+			STACKSIZE, communication_routine, NULL, NULL, NULL,
+			8, 0, K_NO_WAIT);
+
+	k_thread_name_set(tid2, "thread_communication");
+
+	return 0;
+}
+
+
+
+void sensor_routine(void *arg1, void *arg2, void *arg3) {
+	ARG_UNUSED(arg1);
+	ARG_UNUSED(arg2);
+	ARG_UNUSED(arg3);
+
+	int ret;
+	struct sensor_value val_pressure;
+	struct sensor_value val_temperature;
+	struct sensor_value val_humidity;
+	struct sensor_value acc[3], gyr[3];
+	// struct sensor_value mag[3];
+
 	while (1) {
 		ret = gpio_pin_toggle_dt(&led);
 
@@ -211,4 +258,43 @@ int main(void)
 
 		k_sleep(K_SECONDS(1));
 	}
+}
+
+
+
+void communication_routine(void* arg1, void *arg2, void *arg3) {
+	ARG_UNUSED(arg1);
+	ARG_UNUSED(arg2);
+	ARG_UNUSED(arg3);
+
+
+	unsigned char cmd[100];
+	int i;
+	char c;
+
+	while (1) {
+        // get a char from uart and then print it
+        printk("waiting for a command...\n");
+
+
+        c = ' ';
+        i = 0;
+
+        while( (c != '\n') && (i < 20) ) {
+            while(uart_poll_in(dev, &c) != 0) {}
+            
+            cmd[i] = c;
+            i++;
+        }
+
+        
+        printk("Received command:\n");
+
+        for(int k=0; k<i; k++) {
+            printk("%c", cmd[k]);
+        }
+        
+
+        k_msleep(1000); // sleep for 1 second
+    }
 }
