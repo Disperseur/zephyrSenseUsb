@@ -4,10 +4,16 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/drivers/gpio.h>
+
 
 #include <math.h>
 
+
+#define LED1_NODE DT_ALIAS(led1)
+
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
+
 
 typedef struct _accel_t {
 	int64_t ax;
@@ -34,6 +40,8 @@ typedef struct _data_t {
 int main(void)
 {
 	// config capteurs et console
+	static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+
 	const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 	uint32_t dtr = 0;
 	if (usb_enable(NULL)) {
@@ -61,12 +69,16 @@ int main(void)
     // }
 
 	
+	while (!gpio_is_ready_dt(&led)) {
+		printk("led is not ready\n");
+		k_sleep(K_SECONDS(1));
+	}
 
-	/* Poll if the DTR flag was set */
 	while (!dtr) {
+		/* Poll if the DTR flag was set */
 		uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
 		/* Give CPU resources to low priority threads. */
-		k_sleep(K_MSEC(100));
+		k_sleep(K_SECONDS(1));
 	}
 
 	LOG_INF("Waiting for sensors to be ready...");
@@ -127,8 +139,15 @@ int main(void)
 
 		
 	int ret;
+
+	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0) {
+		return 0;
+	}
     
 	while (1) {
+		ret = gpio_pin_toggle_dt(&led);
+
 		//mesures
     	ret = sensor_sample_fetch(sensor_pressure);
 		if(ret != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret);
