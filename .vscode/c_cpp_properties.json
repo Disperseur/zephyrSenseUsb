@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Zephyr",
+            "includePath": [
+                "/home/antoine/zephyrproject/zephyr/include/",
+                "/home/antoine/zephyrproject/zephyr/include/zephyr/",
+                "/home/antoine/zephyrproject/",
+                "/home/antoine/zephyrSenseUsb/build/zephyr/include/generated/"
+            ],
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17"
+        }
+    ],
+    "version": 4
+}
