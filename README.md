@@ -36,3 +36,7 @@ Televerser sur la arduino_nano_33_ble sense rev2 :
 
 
 Probablement qu'un petit script ps1 serait le bienvenu...
+
+
+
+calcul de l'altitude : 44330 * ( 1 - pow(data.pressure/101.325, 1/5.255) );
