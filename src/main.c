@@ -17,6 +17,14 @@
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
+K_FIFO_DEFINE(fifo_thread_comm_in);
+
+// structure element fifo
+struct data_item_t {
+	void *fifo_reserved;
+	int message;
+} tx_data;
+struct data_item_t *rx_data;
 
 typedef struct _accel_t {
 	int64_t ax;
@@ -245,6 +253,13 @@ void sensor_routine(void *arg1, void *arg2, void *arg3) {
 		sensors_data.gyro.gz = sensor_value_to_milli(&gyr[2]);
 
 
+		// verif si msg de comm thread
+		if(k_fifo_is_empty(&fifo_thread_comm_in) == 0) {
+			// msgs a lire de comm
+			rx_data = k_fifo_get(&fifo_thread_comm_in, K_FOREVER);
+			if(rx_data->message == 1234) printk("ACK\n");
+		}
+
 		// affichage en millieme de l'unite correspondante pour eviter les flottants
 		printk("TEMPERATURE %lld\n", sensors_data.temperature);
 		printk("HUMIDITY %lld\n", sensors_data.humidity);
@@ -273,14 +288,11 @@ void communication_routine(void* arg1, void *arg2, void *arg3) {
 	char c;
 
 	while (1) {
-        // get a char from uart and then print it
-        printk("waiting for a command...\n");
-
-
         c = ' ';
         i = 0;
 
         while( (c != '\n') && (i < 20) ) {
+			uart_
             while(uart_poll_in(dev, &c) != 0) {}
             
             cmd[i] = c;
@@ -288,12 +300,15 @@ void communication_routine(void* arg1, void *arg2, void *arg3) {
         }
 
         
-        printk("Received command:\n");
-
-        for(int k=0; k<i; k++) {
-            printk("%c", cmd[k]);
-        }
         
+
+        // for(int k=0; k<i; k++) {
+        //     printk("%c", cmd[k]);
+        // }
+        
+		// send msg to comm thread for ack
+		tx_data.message = 1234;
+		k_fifo_put(&fifo_thread_comm_in, &tx_data);
 
         k_msleep(1000); // sleep for 1 second
     }
