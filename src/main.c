@@ -30,35 +30,32 @@ typedef struct _data_t {
 	gyro_t  gyro;
 } data_t;
 
+data_t sensors_data;
+struct sensor_value val_pressure;
+struct sensor_value val_temperature;
+struct sensor_value val_humidity;
+struct sensor_value acc[3], gyr[3];
+
+
+const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+const struct device *sensor_pressure = DEVICE_DT_GET_ONE(st_lps22hb_press);
+const struct device *sensor_temperature = DEVICE_DT_GET_ONE(renesas_hs300x);
+const struct device *sensor_acceleration = DEVICE_DT_GET_ONE(bosch_bmi270);
+
+
+
+void setup_sensor_acceleration(const struct device *sensor_acceleration);
+
 
 int main(void)
 {
 	// config capteurs et console
-	const struct device *const dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
+	
 	uint32_t dtr = 0;
 	if (usb_enable(NULL)) {
-		return 0;
+		LOG_ERR("Failed to start USB");
+		while(1);
 	}
-
-	const struct device *sensor_pressure = DEVICE_DT_GET_ONE(st_lps22hb_press);
-    if (sensor_pressure == NULL) {
-        return -1;
-    }
-
-	const struct device *sensor_temperature = DEVICE_DT_GET_ONE(renesas_hs300x);
-    if (sensor_temperature == NULL) {
-        return -1;
-    }
-
-	const struct device *sensor_acceleration = DEVICE_DT_GET_ONE(bosch_bmi270);
-    if (sensor_acceleration == NULL) {
-        return -1;
-    }
-
-	// const struct device *sensor_magfield = DEVICE_DT_GET_ONE(bosch_bmm150);
-    // if (sensor_magfield == NULL) {
-    //     return -1;
-    // }
 
 	
 
@@ -72,99 +69,66 @@ int main(void)
 	LOG_INF("Waiting for sensors to be ready...");
 
 	while (!device_is_ready(sensor_pressure)) {
-		printk("Device %s is not ready\n", sensor_pressure->name);
+		LOG_ERR("Device %s is not ready\n", sensor_pressure->name);
 		k_sleep(K_SECONDS(1));
 	}
 	while (!device_is_ready(sensor_temperature)) {
-		printk("Device %s is not ready\n", sensor_temperature->name);
+		LOG_ERR("Device %s is not ready\n", sensor_temperature->name);
 		k_sleep(K_SECONDS(1));
 	}
 	while (!device_is_ready(sensor_acceleration)) {
-		printk("Device %s is not ready\n", sensor_acceleration->name);
+		LOG_ERR("Device %s is not ready\n", sensor_acceleration->name);
 		k_sleep(K_SECONDS(1));
 	}
-	// while (!device_is_ready(sensor_magfield)) {
-	// 	printf("Device %s is not ready\n", sensor_magfield->name);
-	// 	k_sleep(K_SECONDS(1));
-	// }
 
 	LOG_INF("Sensors ready.");
 
 	
 
 
-	data_t sensors_data;
-	struct sensor_value val_pressure;
-	struct sensor_value val_temperature;
-	struct sensor_value val_humidity;
-	struct sensor_value acc[3], gyr[3];
-	// struct sensor_value mag[3];
-
-	struct sensor_value full_scale, sampling_freq, oversampling;
 	
-	// config acc sensor
-	full_scale.val1 = 2;            /* G */
-	full_scale.val2 = 0;
-	sampling_freq.val1 = 100;       /* Hz. Performance mode */
-	sampling_freq.val2 = 0;
-	oversampling.val1 = 1;          /* Normal mode */
-	oversampling.val2 = 0;
-
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_FULL_SCALE, &full_scale);
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_OVERSAMPLING, &oversampling);
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &sampling_freq);
-
-	full_scale.val1 = 500;          /* dps */
-	full_scale.val2 = 0;
-	sampling_freq.val1 = 100;       /* Hz. Performance mode */
-	sampling_freq.val2 = 0;
-	oversampling.val1 = 1;          /* Normal mode */
-	oversampling.val2 = 0;
-
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_FULL_SCALE, &full_scale);
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_OVERSAMPLING, &oversampling);
-	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &sampling_freq);
+	setup_sensor_acceleration(sensor_acceleration);
+	
 
 		
-	int ret;
+	int ret_sensor_pressure, ret_sensor_temperature, ret_sensor_acceleration;
     
 	while (1) {
 		//mesures
-    	ret = sensor_sample_fetch(sensor_pressure);
-		if(ret != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret);
+    	ret_sensor_pressure= sensor_sample_fetch(sensor_pressure);
+		ret_sensor_temperature = sensor_sample_fetch(sensor_temperature);
+		ret_sensor_acceleration = sensor_sample_fetch(sensor_acceleration);
+
+		if(ret_sensor_pressure != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret_sensor_pressure);
 		else {
-			ret = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
+			ret_sensor_pressure = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
 			
-			if(ret != 0) LOG_ERR("failed to get pressure: %d", ret);
+			if(ret_sensor_pressure != 0) LOG_ERR("failed to get pressure: %d", ret_sensor_pressure);
 		}
 
-		ret = sensor_sample_fetch(sensor_temperature);
-		if(ret != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret);
-		else {
-			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
-
-			if(ret != 0) LOG_ERR("failed to get temperature: %d", ret);
 		
-			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
-			
-			if(ret != 0) LOG_ERR("failed to get humidity: %d", ret);
-		}
-
-		ret = sensor_sample_fetch(sensor_acceleration);
-		if(ret != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret);
+		if(ret_sensor_temperature != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret_sensor_temperature);
 		else {
-			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
+			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
+
+			if(ret_sensor_temperature != 0) LOG_ERR("failed to get temperature: %d", ret_sensor_temperature);
+		
+			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
 			
-			if(ret != 0) LOG_ERR("failed to get acc: %d", ret);
-			
-			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
-			
-			if(ret != 0) LOG_ERR("failed to get gyr: %d", ret);
+			if(ret_sensor_temperature != 0) LOG_ERR("failed to get humidity: %d", ret_sensor_temperature);
 		}
 
-		// ret = sensor_sample_fetch(sensor_magfield);
-		// ret = sensor_channel_get(sensor_magfield, SENSOR_CHAN_MAGN_XYZ, mag);
-
+		
+		if(ret_sensor_acceleration != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret_sensor_acceleration);
+		else {
+			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
+			
+			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get acc: %d", ret_sensor_acceleration);
+			
+			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
+			
+			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get gyr: %d", ret_sensor_acceleration);
+		}
 
 		// conversion
 		sensors_data.temperature = sensor_value_to_milli(&val_temperature);
@@ -185,11 +149,39 @@ int main(void)
 		printk("PRESSURE %lld\n", sensors_data.pressure);
 		printk("ALTITUDE %lld\n", sensors_data.altitude);
 		printk("ACCEL_LIN %lld %lld %lld\n", sensors_data.accel.ax, sensors_data.accel.ay, sensors_data.accel.az);
-		printk("ACCEL_ROT %lld %lld %lld\n", sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);
-		// printk("MX: %d.%06d; MY: %d.%06d; MZ: %d.%06d;\n", mag[0].val1, mag[0].val2, mag[1].val1, mag[1].val2, mag[2].val1, mag[2].val2);
-		
+		printk("ACCEL_ROT %lld %lld %lld\n", sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);		
 		printk("\n");
 
 		k_sleep(K_SECONDS(1));
 	}
+}
+
+
+
+void setup_sensor_acceleration(const struct device *sensor_acceleration) {
+	struct sensor_value full_scale, sampling_freq, oversampling;
+
+	// config acc lin sensor
+	full_scale.val1 = 2;            /* G */
+	full_scale.val2 = 0;
+	sampling_freq.val1 = 100;       /* Hz. Performance mode */
+	sampling_freq.val2 = 0;
+	oversampling.val1 = 1;          /* Normal mode */
+	oversampling.val2 = 0;
+
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_FULL_SCALE, &full_scale);
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_OVERSAMPLING, &oversampling);
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &sampling_freq);
+
+	// config acc rot sensor
+	full_scale.val1 = 500;          /* dps */
+	full_scale.val2 = 0;
+	sampling_freq.val1 = 100;       /* Hz. Performance mode */
+	sampling_freq.val2 = 0;
+	oversampling.val1 = 1;          /* Normal mode */
+	oversampling.val2 = 0;
+
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_FULL_SCALE, &full_scale);
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_OVERSAMPLING, &oversampling);
+	sensor_attr_set(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, SENSOR_ATTR_SAMPLING_FREQUENCY, &sampling_freq);
 }
