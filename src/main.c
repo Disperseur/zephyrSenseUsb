@@ -62,13 +62,14 @@ const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
 struct k_timer timer_led;
 struct k_timer timer_sensors;
 
+unsigned int timer_sensors_period = 50; //ms
 int ret_sensor_pressure, ret_sensor_temperature, ret_sensor_acceleration;
 bool new_measures = false;
 
 // // threads
 // K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
 // struct k_thread board_status_led_thread_data;
-
+struct k_sem sem_measures;
 
 
 void _cb_board_status_led(struct k_timer *tim);
@@ -136,8 +137,9 @@ int main(void)
 
 
 	k_timer_init(&timer_sensors, _cb_sensors_measures, NULL);
-	k_timer_start(&timer_sensors, K_MSEC(500), K_MSEC(500));
+	k_timer_start(&timer_sensors, K_MSEC(timer_sensors_period), K_MSEC(timer_sensors_period));
 
+	k_sem_init(&sem_measures, 0, 1); //initialise vide car on attends le premier callback pour faire la premiere mesure
 
 
 	// old thread	
@@ -147,76 +149,75 @@ int main(void)
 	while (1) {
 		//mesures
     	
+		k_sem_take(&sem_measures, K_FOREVER);
 
-		if(new_measures) {
-			new_measures = false;
+		ret_sensor_pressure= sensor_sample_fetch(sensor_pressure);
+		ret_sensor_temperature = sensor_sample_fetch(sensor_temperature);
+		ret_sensor_acceleration = sensor_sample_fetch(sensor_acceleration);
 
-			ret_sensor_pressure= sensor_sample_fetch(sensor_pressure);
-			ret_sensor_temperature = sensor_sample_fetch(sensor_temperature);
-			ret_sensor_acceleration = sensor_sample_fetch(sensor_acceleration);
-
-			if(ret_sensor_pressure != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret_sensor_pressure);
-			else {
-				ret_sensor_pressure = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
-				
-				if(ret_sensor_pressure != 0) LOG_ERR("failed to get pressure: %d", ret_sensor_pressure);
-			}
-
+		if(ret_sensor_pressure != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret_sensor_pressure);
+		else {
+			ret_sensor_pressure = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
 			
-			if(ret_sensor_temperature != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret_sensor_temperature);
-			else {
-				ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
-
-				if(ret_sensor_temperature != 0) LOG_ERR("failed to get temperature: %d", ret_sensor_temperature);
-			
-				ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
-				
-				if(ret_sensor_temperature != 0) LOG_ERR("failed to get humidity: %d", ret_sensor_temperature);
-			}
-
-			
-			if(ret_sensor_acceleration != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret_sensor_acceleration);
-			else {
-				ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
-				
-				if(ret_sensor_acceleration != 0) LOG_ERR("failed to get acc: %d", ret_sensor_acceleration);
-				
-				ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
-				
-				if(ret_sensor_acceleration != 0) LOG_ERR("failed to get gyr: %d", ret_sensor_acceleration);
-			}
-
-			// conversion
-			sensors_data.temperature 	= sensor_value_to_milli(&val_temperature);
-			sensors_data.humidity 		= sensor_value_to_milli(&val_humidity);
-			sensors_data.pressure 		= sensor_value_to_milli(&val_pressure);
-			sensors_data.altitude 		= 1000.0 * 44330.0 * ( 1.0 - pow(sensor_value_to_double(&val_pressure)/101.325, 1/5.255) );
-			sensors_data.accel.ax 		= sensor_value_to_milli(&acc[0]);
-			sensors_data.accel.ay 		= sensor_value_to_milli(&acc[1]);
-			sensors_data.accel.az 		= sensor_value_to_milli(&acc[2]);
-			sensors_data.gyro.gx 		= sensor_value_to_milli(&gyr[0]);
-			sensors_data.gyro.gy 		= sensor_value_to_milli(&gyr[1]);
-			sensors_data.gyro.gz 		= sensor_value_to_milli(&gyr[2]);
-
-
-			// affichage en millieme de l'unite correspondante pour eviter les flottants
-			printk("TEMPERATURE %lld\n", sensors_data.temperature);
-			printk("HUMIDITY %lld\n", sensors_data.humidity);
-			printk("PRESSURE %lld\n", sensors_data.pressure);
-			printk("ALTITUDE %lld\n", sensors_data.altitude);
-			printk("ACCEL_LIN %lld %lld %lld\n", sensors_data.accel.ax, sensors_data.accel.ay, sensors_data.accel.az);
-			printk("ACCEL_ROT %lld %lld %lld\n", sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);		
-			printk("\n");
+			if(ret_sensor_pressure != 0) LOG_ERR("failed to get pressure: %d", ret_sensor_pressure);
 		}
-		
 
-		k_sleep(K_MSEC(1));
+		
+		if(ret_sensor_temperature != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret_sensor_temperature);
+		else {
+			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
+
+			if(ret_sensor_temperature != 0) LOG_ERR("failed to get temperature: %d", ret_sensor_temperature);
+		
+			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
+			
+			if(ret_sensor_temperature != 0) LOG_ERR("failed to get humidity: %d", ret_sensor_temperature);
+		}
+
+		
+		if(ret_sensor_acceleration != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret_sensor_acceleration);
+		else {
+			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
+			
+			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get acc: %d", ret_sensor_acceleration);
+			
+			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
+			
+			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get gyr: %d", ret_sensor_acceleration);
+		}
+
+		// conversion
+		sensors_data.temperature 	= sensor_value_to_milli(&val_temperature);
+		sensors_data.humidity 		= sensor_value_to_milli(&val_humidity);
+		sensors_data.pressure 		= sensor_value_to_milli(&val_pressure);
+		sensors_data.altitude 		= 1000.0 * 44330.0 * ( 1.0 - pow(sensor_value_to_double(&val_pressure)/101.325, 1/5.255) );
+		sensors_data.accel.ax 		= sensor_value_to_milli(&acc[0]);
+		sensors_data.accel.ay 		= sensor_value_to_milli(&acc[1]);
+		sensors_data.accel.az 		= sensor_value_to_milli(&acc[2]);
+		sensors_data.gyro.gx 		= sensor_value_to_milli(&gyr[0]);
+		sensors_data.gyro.gy 		= sensor_value_to_milli(&gyr[1]);
+		sensors_data.gyro.gz 		= sensor_value_to_milli(&gyr[2]);
+
+
+		// affichage en millieme de l'unite correspondante pour eviter les flottants
+		printk("TEMPERATURE %lld\n", sensors_data.temperature);
+		printk("HUMIDITY %lld\n", sensors_data.humidity);
+		printk("PRESSURE %lld\n", sensors_data.pressure);
+		printk("ALTITUDE %lld\n", sensors_data.altitude);
+		printk("ACCEL_LIN %lld %lld %lld\n", sensors_data.accel.ax, sensors_data.accel.ay, sensors_data.accel.az);
+		printk("ACCEL_ROT %lld %lld %lld\n", sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);		
+		printk("\n");
+
 	}
+	
+
+	// k_sleep(K_MSEC(1));
 }
 
 
 void _cb_sensors_measures(struct k_timer *tim) {
-	new_measures = true;
+	// new_measures = true;
+	k_sem_give(&sem_measures);
 }
 
 
