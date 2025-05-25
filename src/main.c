@@ -89,8 +89,8 @@ int main(void)
 
 
 	// timers setup and startup
-	// k_timer_init(&timer_led, _cb_board_status_led, NULL);
-	// k_timer_start(&timer_led, K_MSEC(300), K_MSEC(300));
+	k_timer_init(&timer_led, _cb_board_status_led, NULL);
+	k_timer_start(&timer_led, K_MSEC(300), K_MSEC(300));
 
 
 
@@ -103,19 +103,16 @@ int main(void)
 		board_status = FAULT;
 		while(1);
 	}
-
-	printk("Flag_1\n");
+	board_status = RUNNING;
 
 	/* Poll if the DTR flag was set: there is a client at the other side of the serial port */
 	while (!dtr) {
 		uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
-		board_status = FAULT;
 		/* Give CPU resources to low priority threads. */
+		board_status = FAULT;
 		k_sleep(K_MSEC(100));
 	}
 	board_status = RUNNING;
-
-	printk("Flag_2\n");
 
 	LOG_INF("Waiting for sensors to be ready...");
 
@@ -138,8 +135,8 @@ int main(void)
 	setup_sensor_acceleration(sensor_acceleration);
 
 
-	// k_timer_init(&timer_sensors, _cb_sensors_measures, NULL);
-	// k_timer_start(&timer_sensors, K_MSEC(500), K_MSEC(500));
+	k_timer_init(&timer_sensors, _cb_sensors_measures, NULL);
+	k_timer_start(&timer_sensors, K_MSEC(500), K_MSEC(500));
 
 
 
@@ -213,14 +210,13 @@ int main(void)
 		}
 		
 
-		// k_sleep(K_SECONDS(1));
+		k_sleep(K_MSEC(1));
 	}
 }
 
 
 void _cb_sensors_measures(struct k_timer *tim) {
 	new_measures = true;
-	printk("CALLBACK SENSORS\n");
 }
 
 
