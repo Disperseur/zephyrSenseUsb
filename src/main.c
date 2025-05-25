@@ -62,9 +62,13 @@ const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
 struct k_timer timer_led;
 struct k_timer timer_sensors;
 
-unsigned int timer_sensors_period = 50; //ms
+unsigned int timer_sensors_period = 500; //ms
 int ret;
 bool new_measures = false;
+
+char command_buffer[100];
+int i;
+bool command_available = false;
 
 // threads
 K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
@@ -75,7 +79,7 @@ struct k_sem sem_measures;
 void _cb_board_status_led(struct k_timer *tim);
 void _cb_sensors_measures(struct k_timer *tim);
 void setup_sensor_acceleration(const struct device *sensor_acceleration);
-
+void uart_irq_handler(const struct device *dev, void *user_data);
 
 int main(void)
 {
@@ -114,6 +118,10 @@ int main(void)
 		k_sleep(K_MSEC(100));
 	}
 	board_status = RUNNING;
+
+	// uart irq setup
+	uart_irq_callback_set(dev, uart_irq_handler);
+	uart_irq_rx_enable(dev);
 
 	LOG_INF("Waiting for sensors to be ready...");
 
@@ -208,6 +216,22 @@ int main(void)
 
 	}
 }
+
+
+
+void uart_irq_handler(const struct device *dev, void *user_data) {
+	printk("ACK\n");
+
+	if(uart_irq_rx_ready(dev)) {
+		// si data a lire dans la fifo uart
+		i = 0;
+		while(uart_fifo_read(dev, &command_buffer[i], 1)) {
+			i++;
+		}
+	}
+	command_available = true;
+}
+
 
 
 void _cb_sensors_measures(struct k_timer *tim) {
