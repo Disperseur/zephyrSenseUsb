@@ -63,12 +63,12 @@ struct k_timer timer_led;
 struct k_timer timer_sensors;
 
 unsigned int timer_sensors_period = 50; //ms
-int ret_sensor_pressure, ret_sensor_temperature, ret_sensor_acceleration;
+int ret;
 bool new_measures = false;
 
-// // threads
-// K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
-// struct k_thread board_status_led_thread_data;
+// threads
+K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
+struct k_thread board_status_led_thread_data;
 struct k_sem sem_measures;
 
 
@@ -146,44 +146,42 @@ int main(void)
 	// k_tid_t my_tid = k_thread_create(&board_status_led_thread_data, board_status_led_thread_stack_area, K_THREAD_STACK_SIZEOF(board_status_led_thread_stack_area), _board_status_led, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
 
 
-	while (1) {
-		//mesures
-    	
+	while (1) { 	
 		k_sem_take(&sem_measures, K_FOREVER);
 
-		ret_sensor_pressure= sensor_sample_fetch(sensor_pressure);
-		ret_sensor_temperature = sensor_sample_fetch(sensor_temperature);
-		ret_sensor_acceleration = sensor_sample_fetch(sensor_acceleration);
-
-		if(ret_sensor_pressure != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret_sensor_pressure);
+		ret= sensor_sample_fetch(sensor_pressure);
+		
+		if(ret != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret);
 		else {
-			ret_sensor_pressure = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
+			ret = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
 			
-			if(ret_sensor_pressure != 0) LOG_ERR("failed to get pressure: %d", ret_sensor_pressure);
+			if(ret != 0) LOG_ERR("failed to get pressure: %d", ret);
 		}
 
-		
-		if(ret_sensor_temperature != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret_sensor_temperature);
-		else {
-			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
+		ret = sensor_sample_fetch(sensor_temperature);
 
-			if(ret_sensor_temperature != 0) LOG_ERR("failed to get temperature: %d", ret_sensor_temperature);
+		if(ret != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret);
+		else {
+			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
+
+			if(ret != 0) LOG_ERR("failed to get temperature: %d", ret);
 		
-			ret_sensor_temperature = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
+			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
 			
-			if(ret_sensor_temperature != 0) LOG_ERR("failed to get humidity: %d", ret_sensor_temperature);
+			if(ret != 0) LOG_ERR("failed to get humidity: %d", ret);
 		}
 
-		
-		if(ret_sensor_acceleration != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret_sensor_acceleration);
+		ret = sensor_sample_fetch(sensor_acceleration);
+
+		if(ret != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret);
 		else {
-			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
+			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
 			
-			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get acc: %d", ret_sensor_acceleration);
+			if(ret != 0) LOG_ERR("failed to get acc: %d", ret);
 			
-			ret_sensor_acceleration = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
+			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
 			
-			if(ret_sensor_acceleration != 0) LOG_ERR("failed to get gyr: %d", ret_sensor_acceleration);
+			if(ret != 0) LOG_ERR("failed to get gyr: %d", ret);
 		}
 
 		// conversion
@@ -209,9 +207,6 @@ int main(void)
 		printk("\n");
 
 	}
-	
-
-	// k_sleep(K_MSEC(1));
 }
 
 
