@@ -13,6 +13,7 @@
 #define LED_GREEN 	DT_ALIAS(led1)
 #define LED_BLUE 	DT_ALIAS(led2)
 
+#define COMMAND_BUFFER_SIZE 100
 
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
@@ -66,15 +67,17 @@ unsigned int timer_sensors_period = 500; //ms
 int ret;
 bool new_measures = false;
 
-char command_buffer[100];
+char command_buffer[COMMAND_BUFFER_SIZE];
 int i;
 bool command_available = false;
 
 // threads
-K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
-struct k_thread board_status_led_thread_data;
+K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
+struct k_thread cmd_thread_data;
 struct k_sem sem_measures;
+struct k_sem sem_cmd;
 
+void _cmd_handler(void*, void*, void*);
 
 void _cb_board_status_led(struct k_timer *tim);
 void _cb_sensors_measures(struct k_timer *tim);
@@ -148,10 +151,10 @@ int main(void)
 	k_timer_start(&timer_sensors, K_MSEC(timer_sensors_period), K_MSEC(timer_sensors_period));
 
 	k_sem_init(&sem_measures, 0, 1); //initialise vide car on attends le premier callback pour faire la premiere mesure
-
-
+	k_sem_init(&sem_cmd, 0, 1);
+	
 	// old thread	
-	// k_tid_t my_tid = k_thread_create(&board_status_led_thread_data, board_status_led_thread_stack_area, K_THREAD_STACK_SIZEOF(board_status_led_thread_stack_area), _board_status_led, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
+	k_tid_t cmd_thread_tid = k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _cmd_handler, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
 
 
 	while (1) { 	
@@ -219,8 +222,22 @@ int main(void)
 
 
 
+void _cmd_handler(void*, void*, void*) {
+	//handler des commandes recues par uart dans la variable command_buffer et command_available
+
+	while(1) {
+		k_sem_take(&sem_cmd, K_FOREVER); // on attends qu'une commande soit dispo dans le buffer dedie command_buffer
+
+		LOG_INF("ACK");
+		// une commande est dispo, on l'affiche -> il faudra la récup pour switch dessus a posteriori
+		printk("%s", command_buffer);
+	}
+}
+
+
+
 void uart_irq_handler(const struct device *dev, void *user_data) {
-	printk("ACK\n");
+	// printk("ACK\n");
 
 	if(uart_irq_rx_ready(dev)) {
 		// si data a lire dans la fifo uart
@@ -229,7 +246,8 @@ void uart_irq_handler(const struct device *dev, void *user_data) {
 			i++;
 		}
 	}
-	command_available = true;
+	//command_available = true;
+	k_sem_give(&sem_cmd); // libere le thread de gestion des commandes pour le traitement de la nouvelle commande
 }
 
 
