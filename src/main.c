@@ -59,25 +59,22 @@ const struct device *sensor_temperature 	= DEVICE_DT_GET_ONE(renesas_hs300x);
 const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
 
 // timers
-// struct k_timer timer_led;
+struct k_timer timer_led;
 
 
-// sems
-struct k_sem sem_board_status;
 
-
-// threads
-K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
-struct k_thread board_status_led_thread_data;
+// // threads
+// K_THREAD_STACK_DEFINE(board_status_led_thread_stack_area, 1024);
+// struct k_thread board_status_led_thread_data;
 
 
 
 void setup_sensor_acceleration(const struct device *sensor_acceleration);
-void _board_status_led(void*, void*, void*);
+void _cb_board_status_led(struct k_timer *tim);
 
 int main(void)
 {
-	int ret, ret_sensor_pressure, ret_sensor_temperature, ret_sensor_acceleration;
+	int ret_sensor_pressure, ret_sensor_temperature, ret_sensor_acceleration;
 	// config capteurs et console
 	
 	uint32_t dtr = 0;
@@ -123,19 +120,13 @@ int main(void)
 	setup_sensor_acceleration(sensor_acceleration);
 
 
-	// sems init
-	k_sem_init(&sem_board_status, 1, 1);
-
 	// timers setup and startup
-	// k_timer_init(&timer_led, _cb_tim_status_led, NULL);
-	// k_timer_start(&timer_led, K_MSEC(500), K_MSEC(500));
+	k_timer_init(&timer_led, _cb_board_status_led, NULL);
+	k_timer_start(&timer_led, K_MSEC(300), K_MSEC(300));
 
-	// demarrage thread leds
-	
+	// old thread	
+	// k_tid_t my_tid = k_thread_create(&board_status_led_thread_data, board_status_led_thread_stack_area, K_THREAD_STACK_SIZEOF(board_status_led_thread_stack_area), _board_status_led, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
 
-	k_tid_t my_tid = k_thread_create(&board_status_led_thread_data, board_status_led_thread_stack_area, K_THREAD_STACK_SIZEOF(board_status_led_thread_stack_area), _board_status_led, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
-
-	LOG_INF("Thread LED created");
 
 	while (1) {
 		//mesures
@@ -198,11 +189,7 @@ int main(void)
 
 		k_sleep(K_SECONDS(1));
 
-		//k_sem_take(&sem_board_status, K_FOREVER);
 		board_status = FAULT;
-		//k_sem_give(&sem_board_status);
-
-		printk("bs=%d", board_status);
 	}
 }
 
@@ -210,35 +197,37 @@ int main(void)
 
 
 
-void _board_status_led(void*, void*, void*) {
-	for(;;) {
-		//callback to display the status of the program on the RGB led
-		//k_sem_take(&sem_board_status, K_FOREVER);
-		_board_status_t bs = board_status;
-		//k_sem_give(&sem_board_status);
+void _cb_board_status_led(struct k_timer *tim) {
+	//callback to display the status of the program on the RGB led
 
-		switch (bs)
-		{
-		case RUNNING:
-			gpio_pin_toggle_dt(&led_green);
-			break;
+	switch (board_status)
+	{
+	case RUNNING:
+		gpio_pin_set_dt(&led_red, 0);
+		gpio_pin_set_dt(&led_blue, 0);
 
-		case WAITING:
-			gpio_pin_set_dt(&led_green, 1);
-			break;
+		gpio_pin_toggle_dt(&led_green);
+		break;
 
-		case FAULT:
-			gpio_pin_toggle_dt(&led_red);
-			break;
-		
-		default:
-			gpio_pin_set_dt(&led_red, 0);
-			gpio_pin_set_dt(&led_green, 0);
-			gpio_pin_set_dt(&led_blue, 1);
-			break;
-		}
+	case WAITING:
+		gpio_pin_set_dt(&led_red, 0);
+		gpio_pin_set_dt(&led_blue, 0);
 
-		k_sleep(K_MSEC(300));
+		gpio_pin_set_dt(&led_green, 1);
+		break;
+
+	case FAULT:
+		gpio_pin_set_dt(&led_green, 0);
+		gpio_pin_set_dt(&led_blue, 0);
+
+		gpio_pin_toggle_dt(&led_red);
+		break;
+	
+	default:
+		gpio_pin_set_dt(&led_red, 0);
+		gpio_pin_set_dt(&led_green, 0);
+		gpio_pin_set_dt(&led_blue, 1);
+		break;
 	}
 }
 
