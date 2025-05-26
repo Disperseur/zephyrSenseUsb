@@ -63,7 +63,7 @@ const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
 struct k_timer timer_led;
 struct k_timer timer_sensors;
 
-unsigned int timer_sensors_period = 500; //ms
+unsigned int timer_sensors_period = 1000; //ms
 int ret;
 bool new_measures = false;
 
@@ -73,11 +73,18 @@ bool command_available = false;
 
 // threads
 K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
+K_THREAD_STACK_DEFINE(measures_thread_stack_area, 2048);
+
 struct k_thread cmd_thread_data;
+struct k_thread measures_thread_data;
+
+
 struct k_sem sem_measures;
 struct k_sem sem_cmd;
 
 void _cmd_handler(void*, void*, void*);
+void _measures_handler(void*, void*, void*);
+
 
 void _cb_board_status_led(struct k_timer *tim);
 void _cb_sensors_measures(struct k_timer *tim);
@@ -148,15 +155,27 @@ int main(void)
 
 
 	k_timer_init(&timer_sensors, _cb_sensors_measures, NULL);
-	k_timer_start(&timer_sensors, K_MSEC(timer_sensors_period), K_MSEC(timer_sensors_period));
+	k_timer_start(&timer_sensors, K_MSEC(1000), K_MSEC(1000));
 
 	k_sem_init(&sem_measures, 0, 1); //initialise vide car on attends le premier callback pour faire la premiere mesure
 	k_sem_init(&sem_cmd, 0, 1);
 	
 	// old thread	
 	k_tid_t cmd_thread_tid = k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _cmd_handler, NULL, NULL, NULL, 10, 0, K_NO_WAIT);
+	k_tid_t measures_thread_tid = k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area), _measures_handler, NULL, NULL, NULL, 2, 0, K_NO_WAIT);
 
 
+
+
+	// la suite a mettre dans un thread
+	while(1) {
+		k_sleep(K_SECONDS(10));
+	}
+}
+
+
+
+void _measures_handler(void*, void*, void*) {
 	while (1) { 	
 		k_sem_take(&sem_measures, K_FOREVER);
 
@@ -255,6 +274,7 @@ void uart_irq_handler(const struct device *dev, void *user_data) {
 void _cb_sensors_measures(struct k_timer *tim) {
 	// new_measures = true;
 	k_sem_give(&sem_measures);
+	printk("GIVE\n");
 }
 
 
