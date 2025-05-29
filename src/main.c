@@ -71,49 +71,7 @@ unsigned int sensors_period = 500; //ms
 
 char command_buffer[COMMAND_BUFFER_SIZE];
 
-// threads
-K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
-K_THREAD_STACK_DEFINE(measures_thread_stack_area, 2048);
 
-struct k_timer timer_led;
-struct k_timer timer_measures;
-
-struct k_thread cmd_thread_data;
-struct k_thread measures_thread_data;
-
-struct k_sem sem_cmd;
-struct k_sem sem_measures;
-
-void setup_sensor_acceleration(const struct device *sensor_acceleration);
-
-void _handler_cmd(void*, void*, void*);
-void _handler_measures(void*, void*, void*);
-
-void _cb_timer_status_led(struct k_timer *tim);
-void _cb_timer_measures(struct k_timer *tim);
-void _cb_uart_rx(const struct device *dev, void *user_data);
-
-
-data_t sensors_data;
-struct sensor_value val_pressure;
-struct sensor_value val_temperature;
-struct sensor_value val_humidity;
-struct sensor_value acc[3], gyr[3];
-
-const struct gpio_dt_spec led_red 			= GPIO_DT_SPEC_GET(LED_RED, gpios);
-const struct gpio_dt_spec led_green 		= GPIO_DT_SPEC_GET(LED_GREEN, gpios);
-const struct gpio_dt_spec led_blue 			= GPIO_DT_SPEC_GET(LED_BLUE, gpios);
-
-const struct device *const dev 				= DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-const struct device *sensor_pressure 		= DEVICE_DT_GET_ONE(st_lps22hb_press);
-const struct device *sensor_temperature 	= DEVICE_DT_GET_ONE(renesas_hs300x);
-const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
-
-
-
-unsigned int sensors_period = 500; //ms
-
-char command_buffer[COMMAND_BUFFER_SIZE];
 
 // threads
 K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
@@ -138,23 +96,7 @@ void _cb_timer_measures(struct k_timer *tim);
 void _cb_uart_rx(const struct device *dev, void *user_data);
 
 
-data_t sensors_data;
-const struct device *sensor_pressure;
-const struct device *sensor_temperature;
-const struct device *sensor_acceleration;
-struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
 
-void sensor_routine(void*, void*, void*);
-void communication_routine(void*, void*, void*);
-
-const struct device *dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-
-
-K_THREAD_STACK_DEFINE(threadSensors_stack_area, STACKSIZE);
-static struct k_thread threadSensors_data;
-
-K_THREAD_STACK_DEFINE(threadCommunication_stack_area, STACKSIZE);
-static struct k_thread threadCommunication_data;
 
 int main(void)
 {
