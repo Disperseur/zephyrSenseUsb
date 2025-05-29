@@ -7,10 +7,8 @@ Pour avoir le temps : k_uptime_get_32()
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/sensor.h>
-#include <zephyr/logging/log.h>
+// #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h>
-
-
 #include <math.h>
 
 #define LED_RED 	DT_ALIAS(led0)
@@ -20,7 +18,7 @@ Pour avoir le temps : k_uptime_get_32()
 #define COMMAND_BUFFER_SIZE 100
 
 
-LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
+// LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 
 typedef enum {RUNNING, WAITING, FAULT} _board_status_t;
@@ -63,10 +61,9 @@ const struct device *sensor_pressure 		= DEVICE_DT_GET_ONE(st_lps22hb_press);
 const struct device *sensor_temperature 	= DEVICE_DT_GET_ONE(renesas_hs300x);
 const struct device *sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270);
 
-// timers
-struct k_timer timer_led;
 
-unsigned int sensors_period = 900; //ms
+
+unsigned int sensors_period = 500; //ms
 
 char command_buffer[COMMAND_BUFFER_SIZE];
 
@@ -74,19 +71,23 @@ char command_buffer[COMMAND_BUFFER_SIZE];
 K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
 K_THREAD_STACK_DEFINE(measures_thread_stack_area, 2048);
 
+struct k_timer timer_led;
+struct k_timer timer_measures;
+
 struct k_thread cmd_thread_data;
 struct k_thread measures_thread_data;
 
-
 struct k_sem sem_cmd;
+struct k_sem sem_measures;
 
-void _cmd_handler(void*, void*, void*);
-void _measures_handler(void*, void*, void*);
-
-
-void _cb_board_status_led(struct k_timer *tim);
 void setup_sensor_acceleration(const struct device *sensor_acceleration);
-void uart_irq_handler(const struct device *dev, void *user_data);
+
+void _handler_cmd(void*, void*, void*);
+void _handler_measures(void*, void*, void*);
+
+void _cb_timer_status_led(struct k_timer *tim);
+void _cb_timer_measures(struct k_timer *tim);
+void _cb_uart_rx(const struct device *dev, void *user_data);
 
 
 
@@ -101,19 +102,15 @@ int main(void)
 	gpio_pin_configure_dt(&led_green, GPIO_OUTPUT_INACTIVE);
 	gpio_pin_configure_dt(&led_blue, GPIO_OUTPUT_INACTIVE);
 
-
 	// timers setup and startup
-	k_timer_init(&timer_led, _cb_board_status_led, NULL);
+	k_timer_init(&timer_led, _cb_timer_status_led, NULL);
 	k_timer_start(&timer_led, K_MSEC(300), K_MSEC(300));
-
-
-
 
 
 
 	uint32_t dtr = 0;
 	if (usb_enable(NULL)) {
-		LOG_ERR("Failed to start USB");
+		printk("Failed to start USB\n");
 		board_status = FAULT;
 		while(1);
 	}
@@ -129,78 +126,87 @@ int main(void)
 	board_status = RUNNING;
 
 	// uart irq setup
-	uart_irq_callback_set(dev, uart_irq_handler);
+	uart_irq_callback_set(dev, _cb_uart_rx);
 	uart_irq_rx_enable(dev);
 
-	LOG_INF("Waiting for sensors to be ready...");
+	printk("Waiting for sensors to be ready...\n");
 
 	while (!device_is_ready(sensor_pressure)) {
 		board_status = FAULT;
-		LOG_ERR("Device %s is not ready\n", sensor_pressure->name);
+		printk("Device %s is not ready\n", sensor_pressure->name);
 		k_sleep(K_SECONDS(1));
 	}
 	while (!device_is_ready(sensor_temperature)) {
-		LOG_ERR("Device %s is not ready\n", sensor_temperature->name);
+		printk("Device %s is not ready\n", sensor_temperature->name);
 		k_sleep(K_SECONDS(1));
 	}
 	while (!device_is_ready(sensor_acceleration)) {
-		LOG_ERR("Device %s is not ready\n", sensor_acceleration->name);
+		printk("Device %s is not ready\n", sensor_acceleration->name);
 		k_sleep(K_SECONDS(1));
 	}
 
-	LOG_INF("Sensors ready.");
+	printk("Sensors ready.\n");
 
 	setup_sensor_acceleration(sensor_acceleration);
 
 
 	k_sem_init(&sem_cmd, 0, 1);
+	k_sem_init(&sem_measures, 0, 1);
 
 	
-	k_tid_t cmd_thread_tid = k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _cmd_handler, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
-	k_tid_t measures_thread_tid = k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area), _measures_handler, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
+	k_tid_t cmd_thread_tid = k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _handler_cmd, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
+	k_tid_t measures_thread_tid = k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area), _handler_measures, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
 
+
+	k_timer_init(&timer_measures, _cb_timer_measures, NULL);
+	k_timer_start(&timer_measures, K_MSEC(sensors_period), K_MSEC(sensors_period));
+	
 }
 
-
-
-void _measures_handler(void*, void*, void*) {
+void _handler_measures(void*, void*, void*) {
 	int ret;
+	uint32_t timestamp;
 
-	while (1) { 	
+	while (1) {
+		k_sem_take(&sem_measures, K_FOREVER);
+
+
 		ret= sensor_sample_fetch(sensor_pressure);
 		
-		if(ret != 0) LOG_ERR("failed to fetch pressure sensor: %d", ret);
+		if(ret != 0) printk("failed to fetch pressure sensor: %d\n", ret);
 		else {
 			ret = sensor_channel_get(sensor_pressure, SENSOR_CHAN_PRESS, &val_pressure);
 			
-			if(ret != 0) LOG_ERR("failed to get pressure: %d", ret);
+			if(ret != 0) printk("failed to get pressure: %d\n", ret);
 		}
 
 		ret = sensor_sample_fetch(sensor_temperature);
 
-		if(ret != 0) LOG_ERR("failed to fetch temperature sensor: %d", ret);
+		if(ret != 0) printk("failed to fetch temperature sensor: %d\n", ret);
 		else {
 			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_AMBIENT_TEMP, &val_temperature);
 
-			if(ret != 0) LOG_ERR("failed to get temperature: %d", ret);
+			if(ret != 0) printk("failed to get temperature: %d\n", ret);
 		
 			ret = sensor_channel_get(sensor_temperature, SENSOR_CHAN_HUMIDITY, &val_humidity);
 			
-			if(ret != 0) LOG_ERR("failed to get humidity: %d", ret);
+			if(ret != 0) printk("failed to get humidity: %d\n", ret);
 		}
 
 		ret = sensor_sample_fetch(sensor_acceleration);
 
-		if(ret != 0) LOG_ERR("failed to fetch acceleration sensor: %d", ret);
+		if(ret != 0) printk("failed to fetch acceleration sensor: %d\n", ret);
 		else {
 			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_ACCEL_XYZ, acc);
 			
-			if(ret != 0) LOG_ERR("failed to get acc: %d", ret);
+			if(ret != 0) printk("failed to get acc: %d\n", ret);
 			
 			ret = sensor_channel_get(sensor_acceleration, SENSOR_CHAN_GYRO_XYZ, gyr);
 			
-			if(ret != 0) LOG_ERR("failed to get gyr: %d", ret);
+			if(ret != 0) printk("failed to get gyr: %d\n", ret);
 		}
+
+		timestamp = k_uptime_get_32();
 
 		// conversion
 		sensors_data.temperature 	= sensor_value_to_milli(&val_temperature);
@@ -215,54 +221,36 @@ void _measures_handler(void*, void*, void*) {
 		sensors_data.gyro.gz 		= sensor_value_to_milli(&gyr[2]);
 
 
-		// affichage en millieme de l'unite correspondante pour eviter les flottants
-		printk("TEMPERATURE %lld\n", sensors_data.temperature);
-		printk("HUMIDITY %lld\n", sensors_data.humidity);
-		printk("PRESSURE %lld\n", sensors_data.pressure);
-		printk("ALTITUDE %lld\n", sensors_data.altitude);
-		printk("ACCEL_LIN %lld %lld %lld\n", sensors_data.accel.ax, sensors_data.accel.ay, sensors_data.accel.az);
-		printk("ACCEL_ROT %lld %lld %lld\n", sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);		
+		//affichage en millieme de l'unite correspondante pour eviter les flottants
+		printk("%d TEMPERATURE %lld\n", timestamp, sensors_data.temperature);
+		printk("%d HUMIDITY %lld\n", timestamp, sensors_data.humidity);
+		printk("%d PRESSURE %lld\n", timestamp, sensors_data.pressure);
+		printk("%d ALTITUDE %lld\n", timestamp, sensors_data.altitude);
+		printk("%d ACCEL_LIN %lld %lld %lld\n", timestamp, sensors_data.accel.ax, sensors_data.accel.ay, sensors_data.accel.az);
+		printk("%d ACCEL_ROT %lld %lld %lld\n", timestamp, sensors_data.gyro.gx,  sensors_data.gyro.gy,  sensors_data.gyro.gz);		
 		printk("\n");
-
-		k_msleep(1000);
 	}
 }
 
 
-
-void _cmd_handler(void*, void*, void*) {
+void _handler_cmd(void*, void*, void*) {
 	//handler des commandes recues par uart dans la variable command_buffer et command_available
 
 	while(1) {
 		k_sem_take(&sem_cmd, K_FOREVER); // on attends qu'une commande soit dispo dans le buffer dedie command_buffer
 
-		LOG_INF("ACK");
+		printk("ACK\n");
 		// une commande est dispo, on l'affiche -> il faudra la récup pour switch dessus a posteriori
 		printk("%s", command_buffer);
 	}
 }
 
 
-
-void uart_irq_handler(const struct device *dev, void *user_data) {
-	// printk("ACK\n");
-
-	if(uart_irq_rx_ready(dev)) {
-		// si data a lire dans la fifo uart
-		int i = 0;
-		while(uart_fifo_read(dev, &command_buffer[i], 1)) {
-			i++;
-		}
-	}
-	k_sem_give(&sem_cmd); // libere le thread de gestion des commandes pour le traitement de la nouvelle commande
+void _cb_timer_measures(struct k_timer *tim) {
+	k_sem_give(&sem_measures);
 }
 
-
-
-
-
-
-void _cb_board_status_led(struct k_timer *tim) {
+void _cb_timer_status_led(struct k_timer *tim) {
 	//callback to display the status of the program on the RGB led
 
 	switch (board_status)
@@ -294,9 +282,21 @@ void _cb_board_status_led(struct k_timer *tim) {
 		gpio_pin_set_dt(&led_blue, 1);
 		break;
 	}
+
 }
 
+void _cb_uart_rx(const struct device *dev, void *user_data) {
+	// printk("ACK\n");
 
+	if(uart_irq_rx_ready(dev)) {
+		// si data a lire dans la fifo uart
+		int i = 0;
+		while(uart_fifo_read(dev, &command_buffer[i], 1)) {
+			i++;
+		}
+	}
+	k_sem_give(&sem_cmd); // libere le thread de gestion des commandes pour le traitement de la nouvelle commande
+}
 
 
 
