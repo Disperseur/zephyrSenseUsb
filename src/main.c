@@ -12,8 +12,6 @@ Pour avoir le temps : k_uptime_get_32()
 
 
 
-
-
 #define LED_RED 	DT_ALIAS(led0)
 #define LED_GREEN 	DT_ALIAS(led1)
 #define LED_BLUE 	DT_ALIAS(led2)
@@ -46,9 +44,6 @@ typedef struct _data_t {
 	gyro_t  gyro;
 } data_t;
 
-
-
-
 typedef struct _rgbled_t {
 	struct gpio_dt_spec led_red;
 	struct gpio_dt_spec led_green;
@@ -61,12 +56,11 @@ typedef struct _devices_t {
 	const struct device *sensor_acceleration;
 } devices_t;
 
-
 typedef struct _sensors_t {
 	data_t data;
 	devices_t devices;
 
-	unsigned int sensors_period;
+	unsigned int period;
 } sensors_t;
 
 typedef struct _board_t {
@@ -82,10 +76,7 @@ typedef struct _board_t {
 
 
 
-struct sensor_value val_pressure;
-struct sensor_value val_temperature;
-struct sensor_value val_humidity;
-struct sensor_value acc[3], gyr[3];
+
 
 
 
@@ -103,7 +94,7 @@ board_t board = {
 			.sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270)
 		},
 
-		.sensors_period 			= 500
+		.period 					= 500
 	},
 
 	.console 						= DEVICE_DT_GET(DT_CHOSEN(zephyr_console)),
@@ -126,6 +117,24 @@ struct k_thread measures_thread_data;
 
 struct k_sem sem_cmd;
 struct k_sem sem_measures;
+
+
+
+
+
+// typedef struct _node_t {
+// 	struct k_sem node_sem;
+// 	struct k_timer node_tim;
+// 	struct k_thread node_thread_data;
+// 	k_timer_expiry_t node_tim_cb;
+// 	k_thread_entry_t node_handler;
+
+// } node_t;
+
+// node_t cmd_node = {
+// 	.node_tim_cb = _cb_uart_rx,
+// 	.node_handler = _handler_cmd
+// }
 
 
 
@@ -212,18 +221,24 @@ int main(void)
 	k_sem_init(&sem_measures, 0, 1);
 
 	
-	k_tid_t cmd_thread_tid = k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _handler_cmd, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
-	k_tid_t measures_thread_tid = k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area), _handler_measures, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
+	// thread ids non recuperes car on ne s'attends pas a ce qu'ils se terminent
+	k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area), _handler_cmd, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
+	k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area), _handler_measures, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
 
 
 	k_timer_init(&timer_measures, _cb_timer_measures, NULL);
-	k_timer_start(&timer_measures, K_MSEC(board.sensors.sensors_period), K_MSEC(board.sensors.sensors_period));
+	k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
 	
 }
 
 void _handler_measures(void*, void*, void*) {
 	int ret;
 	uint32_t timestamp;
+	struct sensor_value val_pressure;
+	struct sensor_value val_temperature;
+	struct sensor_value val_humidity;
+	struct sensor_value acc[3], gyr[3];
+	
 
 	while (1) {
 		k_sem_take(&sem_measures, K_FOREVER);
