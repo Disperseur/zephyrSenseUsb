@@ -145,7 +145,7 @@ void _handler_cmd(void*, void*, void*) {
                 printk("DONE");
             }
         }
-        else if(strncmp(board.command_buffer, "SET", 3) == 0) {
+        else if(strncmp(board.command_buffer, "SET", 3) == 0 && board.status == STOPPED) {
             if(strstr(board.command_buffer, "MODE") != NULL) {
                 if(strstr(board.command_buffer, "STREAMING") != NULL) {
                     board.mode = STREAMING;
