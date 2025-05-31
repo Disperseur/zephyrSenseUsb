@@ -129,9 +129,11 @@ void _handler_cmd(void*, void*, void*) {
                     if(board.mode == STREAMING || board.mode == RINGBUFFER) {
                         k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period)); // demarre le timer qui give le semaphore periodiquement
                         board.status = RUNNING;
+                        // printk("DONE");
                     }
                     else if(board.mode == ONESHOT) {
                         k_sem_give(&sem_measures); // give directement le semaphore pour faire une mesure
+                        // printk("DONE");
                     }
                 
             }
@@ -140,54 +142,69 @@ void _handler_cmd(void*, void*, void*) {
             if(board.status == RUNNING) {
                 k_timer_stop(&timer_measures);
                 board.status = STOPPED;
+                printk("DONE");
             }
         }
         else if(strncmp(board.command_buffer, "SET", 3) == 0) {
             if(strstr(board.command_buffer, "MODE") != NULL) {
                 if(strstr(board.command_buffer, "STREAMING") != NULL) {
                     board.mode = STREAMING;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ONESHOT") != NULL) {
                     board.mode = ONESHOT;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "RINGBUFFER") != NULL) {
                     board.mode = RINGBUFFER;
+                    printk("DONE");
                 }
             }
 
             if(strstr(board.command_buffer, "SENSORS") != NULL) {
                 if(strstr(board.command_buffer, "NONE") != NULL) {
                     board.sensor_type = NONE;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
                     board.sensor_type = TEMPERATURE;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "PRESSURE") != NULL) {
                     board.sensor_type = PRESSURE;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
                     board.sensor_type = HUMIDITY;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
                     board.sensor_type = ALTITUDE;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ACCELERATION") != NULL) {
                     board.sensor_type = ACCELERATION;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
                     board.sensor_type = GYROSCOPE;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "MAGFIELD") != NULL) {
                     board.sensor_type = MAGFIELD;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ALL") != NULL) {
                     board.sensor_type = ALL;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ENV") != NULL) {
                     board.sensor_type = ENV;
+                    printk("DONE");
                 }
                 if(strstr(board.command_buffer, "MOTION") != NULL) {
                     board.sensor_type = MOTION;
+                    printk("DONE");
                 }
             }
         }
