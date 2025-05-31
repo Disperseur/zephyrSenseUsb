@@ -1,7 +1,8 @@
 # Projet capteur USB
 
 ## TODO
-- Créer des structures _ctx_.. propres pour contenir tout les éléments relatifs à chaque thread ou callback
+- set period
+- ringbuffer mode
 
 
 ## Compiler

@@ -124,6 +124,9 @@ void _handler_cmd(void*, void*, void*) {
                 break;
             }
         }
+        else if(strncmp(board.command_buffer, "GET PERIOD", 10) == 0) {
+            printk("PERIOD %d\n", board.sensors.period);
+        }
         else if(strncmp(board.command_buffer, "START", 5) == 0) {
             if(board.status == STOPPED) {
                     if(board.mode == STREAMING || board.mode == RINGBUFFER) {
@@ -205,6 +208,14 @@ void _handler_cmd(void*, void*, void*) {
                 if(strstr(board.command_buffer, "MOTION") != NULL) {
                     board.sensor_type = MOTION;
                     printk("DONE");
+                }
+            }
+
+            if(strstr(board.command_buffer, "PERIOD") != NULL) {
+                int period = atoi(board.command_buffer+11);
+                if(200 <= period && period <= 10000) {
+                    board.sensors.period = period;
+                    printk("DONE\n");
                 }
             }
         }
