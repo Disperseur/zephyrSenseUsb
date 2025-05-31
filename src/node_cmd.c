@@ -154,6 +154,42 @@ void _handler_cmd(void*, void*, void*) {
                     board.mode = RINGBUFFER;
                 }
             }
+
+            if(strstr(board.command_buffer, "SENSORS") != NULL) {
+                if(strstr(board.command_buffer, "NONE") != NULL) {
+                    board.sensor_type = NONE;
+                }
+                if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
+                    board.sensor_type = TEMPERATURE;
+                }
+                if(strstr(board.command_buffer, "PRESSURE") != NULL) {
+                    board.sensor_type = PRESSURE;
+                }
+                if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
+                    board.sensor_type = HUMIDITY;
+                }
+                if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
+                    board.sensor_type = ALTITUDE;
+                }
+                if(strstr(board.command_buffer, "ACCELERATION") != NULL) {
+                    board.sensor_type = ACCELERATION;
+                }
+                if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
+                    board.sensor_type = GYROSCOPE;
+                }
+                if(strstr(board.command_buffer, "MAGFIELD") != NULL) {
+                    board.sensor_type = MAGFIELD;
+                }
+                if(strstr(board.command_buffer, "ALL") != NULL) {
+                    board.sensor_type = ALL;
+                }
+                if(strstr(board.command_buffer, "ENV") != NULL) {
+                    board.sensor_type = ENV;
+                }
+                if(strstr(board.command_buffer, "MOTION") != NULL) {
+                    board.sensor_type = MOTION;
+                }
+            }
         }
     }
 }
