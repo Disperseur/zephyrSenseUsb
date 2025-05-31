@@ -21,7 +21,10 @@ board_t board = {
         .period = 500
     },
     .console 						= DEVICE_DT_GET(DT_CHOSEN(zephyr_console)),
-    .status  						= RUNNING
+	
+    .status  						= STOPPED,
+	.mode							= STREAMING,
+	.sensor_type					= ALL
 };
 
 int main(void)
@@ -31,17 +34,13 @@ int main(void)
     uint32_t dtr = 0;
     if (usb_enable(NULL)) {
         printk("Failed to start USB\n");
-        board.status = FAULT;
         while(1);
     }
-    board.status = RUNNING;
 
     while (!dtr) {
         uart_line_ctrl_get(board.console, UART_LINE_CTRL_DTR, &dtr);
-        board.status = FAULT;
         k_sleep(K_MSEC(100));
     }
-    board.status = RUNNING;
 
     node_cmd_init();
 

@@ -26,7 +26,7 @@ void _cb_timer_status_led(struct k_timer *tim) {
         gpio_pin_set_dt(&board.led.led_blue, 0);
         gpio_pin_toggle_dt(&board.led.led_green);
         break;
-    case WAITING:
+    case STOPPED:
         gpio_pin_set_dt(&board.led.led_red, 0);
         gpio_pin_set_dt(&board.led.led_blue, 0);
         gpio_pin_set_dt(&board.led.led_green, 1);

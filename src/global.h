@@ -11,7 +11,28 @@
 #define LED_BLUE   DT_ALIAS(led2)
 #define COMMAND_BUFFER_SIZE 100
 
-typedef enum {RUNNING, WAITING, FAULT} _board_status_t;
+
+typedef enum {  RUNNING,
+                STOPPED,
+                FAULT} _board_status_t;
+
+typedef enum {  STREAMING,
+                ONESHOT,
+                RINGBUFFER} _board_mode_t;
+
+typedef enum {  NONE,
+                TEMPERATURE,
+                PRESSURE,
+                HUMIDITY,
+                ALTITUDE,
+                ACCELERATION,
+                GYROSCOPE,
+                MAGFIELD, 
+                ALL,
+                ENV,
+                MOTION
+              } _sensor_type_t;
+
 
 typedef struct _accel_t {
     int64_t ax, ay, az;
@@ -48,7 +69,10 @@ typedef struct _board_t {
     sensors_t sensors;
     const struct device *console;
     char command_buffer[COMMAND_BUFFER_SIZE];
+    
     _board_status_t status;
+    _board_mode_t mode;
+    _sensor_type_t sensor_type;
 } board_t;
 
 extern board_t board;

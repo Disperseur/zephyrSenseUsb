@@ -15,7 +15,7 @@ void node_measures_init(void) {
                     _handler_measures, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
 
     k_timer_init(&timer_measures, _cb_timer_measures, NULL);
-    k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
+    // k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
 }
 
 void _handler_measures(void*, void*, void*) {

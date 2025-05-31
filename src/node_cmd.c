@@ -2,6 +2,7 @@
 #include <zephyr/drivers/uart.h>
 #include "global.h"
 #include "node_cmd.h"
+#include "node_measures.h"
 #include "string.h"
 
 K_THREAD_STACK_DEFINE(cmd_thread_stack_area, 1024);
@@ -24,11 +25,125 @@ void _handler_cmd(void*, void*, void*) {
         /*traitement de la commande*/
         printk("ACK\n");
 
-        // if(strncmp(board.command_buffer, "GET STATUS", 10) == 0) {
-        //     printk("STATUS RUNNING\n");
-        // }
+        if(strncmp(board.command_buffer, "GET STATUS", 10) == 0) {
+            printk("STATUS ");
 
-        printk("%s", board.command_buffer);
+            switch (board.status)
+            {
+            case RUNNING:
+                printk("RUNNING\n");
+                break;
+
+            case STOPPED:
+                printk("STOPPED\n");
+                break;
+
+            case FAULT:
+                printk("FAULT\n");
+                break;
+            
+            default:
+                printk("UNKNOWN\n");
+                break;
+            }
+
+        }
+        else if(strncmp(board.command_buffer, "GET MODE", 8) == 0) {
+            printk("MODE ");
+
+            switch (board.mode)
+            {
+            case STREAMING:
+                printk("STREAMING\n");
+                break;
+
+            case ONESHOT:
+                printk("ONESHOT\n");
+                break;
+
+            case RINGBUFFER:
+                printk("RINGBUFFER\n");
+                break;
+            
+            default:
+                break;
+            }
+
+        }
+        else if(strncmp(board.command_buffer, "GET SENSORS", 11) == 0) {
+            printk("SENSORS ");
+
+            switch (board.sensor_type)
+            {
+            case NONE:
+                printk("NONE\n");
+                break;
+
+            case TEMPERATURE:
+                printk("TEMPERATURE\n");
+                break;
+            
+            case PRESSURE:
+                printk("PRESSURE\n");
+                break;
+
+            case HUMIDITY:
+                printk("HUMIDITY\n");
+                break;
+
+            case ALTITUDE:
+                printk("ALTITUDE\n");
+                break;
+
+            case ACCELERATION:
+                printk("ACCELERATION\n");
+                break;
+
+            case GYROSCOPE:
+                printk("NOGYROSCOPENE\n");
+                break;
+
+            case MAGFIELD:
+                printk("MAGFIELD\n");
+                break;
+
+            case ALL:
+                printk("ALL\n");
+                break;
+
+            case ENV:
+                printk("ENV\n");
+                break;
+
+            case MOTION:
+                printk("MOTION\n");
+                break;
+            
+            default:
+                printk("UNKNOWN\n");
+                break;
+            }
+        }
+        else if(strncmp(board.command_buffer, "START", 5) == 0) {
+            if(board.status == STOPPED) {
+                    if(board.mode == STREAMING || board.mode == RINGBUFFER) {
+                        k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
+                        board.status = RUNNING;
+                    }
+                    else if(board.mode == ONESHOT) {
+                        k_sem_give(&sem_measures);
+                    }
+                
+            }
+        }
+        else if(strncmp(board.command_buffer, "STOP", 4) == 0) {
+            if(board.status == RUNNING) {
+                k_timer_stop(&timer_measures);
+                board.status = STOPPED;
+            }
+        }
+
+        // printk("%s", board.command_buffer);
     }
 }
 
