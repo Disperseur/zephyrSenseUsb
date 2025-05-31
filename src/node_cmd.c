@@ -127,11 +127,11 @@ void _handler_cmd(void*, void*, void*) {
         else if(strncmp(board.command_buffer, "START", 5) == 0) {
             if(board.status == STOPPED) {
                     if(board.mode == STREAMING || board.mode == RINGBUFFER) {
-                        k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
+                        k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period)); // demarre le timer qui give le semaphore periodiquement
                         board.status = RUNNING;
                     }
                     else if(board.mode == ONESHOT) {
-                        k_sem_give(&sem_measures);
+                        k_sem_give(&sem_measures); // give directement le semaphore pour faire une mesure
                     }
                 
             }
@@ -142,8 +142,19 @@ void _handler_cmd(void*, void*, void*) {
                 board.status = STOPPED;
             }
         }
-
-        // printk("%s", board.command_buffer);
+        else if(strncmp(board.command_buffer, "SET", 3) == 0) {
+            if(strstr(board.command_buffer, "MODE") != NULL) {
+                if(strstr(board.command_buffer, "STREAMING") != NULL) {
+                    board.mode = STREAMING;
+                }
+                if(strstr(board.command_buffer, "ONESHOT") != NULL) {
+                    board.mode = ONESHOT;
+                }
+                if(strstr(board.command_buffer, "RINGBUFFER") != NULL) {
+                    board.mode = RINGBUFFER;
+                }
+            }
+        }
     }
 }
 
