@@ -144,13 +144,11 @@ void _handler_cmd(void*, void*, void*) {
                     if(board.mode == STREAMING || board.mode == RINGBUFFER) {
                         k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period)); // demarre le timer qui give le semaphore periodiquement
                         board.status = RUNNING;
-                        // printk("DONE");
                     }
                     else if(board.mode == ONESHOT) {
                         k_sem_give(&sem_measures); // give directement le semaphore pour faire une mesure
-                        // printk("DONE");
                     }
-                
+                printk("DONE");
             }
         }
         else if(strncmp(board.command_buffer, "STOP", 4) == 0) {
