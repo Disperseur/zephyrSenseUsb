@@ -10,7 +10,7 @@
 #define LED_GREEN  DT_ALIAS(led1)
 #define LED_BLUE   DT_ALIAS(led2)
 #define COMMAND_BUFFER_SIZE 100
-
+#define RINGBUFFER_SIZE 10
 
 typedef enum {  RUNNING,
                 STOPPED,
@@ -60,8 +60,12 @@ typedef struct _devices_t {
 
 typedef struct _sensors_t {
     data_t data;
+    data_t ringbuffer[RINGBUFFER_SIZE];
+
     devices_t devices;
+    
     unsigned int period;
+    unsigned int ringbuffer_index;
 } sensors_t;
 
 typedef struct _board_t {

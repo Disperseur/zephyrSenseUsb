@@ -18,7 +18,8 @@ board_t board = {
             .sensor_temperature  	= DEVICE_DT_GET_ONE(renesas_hs300x),
             .sensor_acceleration 	= DEVICE_DT_GET_ONE(bosch_bmi270)
         },
-        .period = 500
+        .period                     = 500,
+        .ringbuffer_index           = 0
     },
     .console 						= DEVICE_DT_GET(DT_CHOSEN(zephyr_console)),
 	

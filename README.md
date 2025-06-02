@@ -1,8 +1,9 @@
 # Projet capteur USB
 
 ## TODO
-- set period
-- ringbuffer mode
+- ringbuffer mode:
+	- enregistrement (v1 mais peut etre pb de poiteur lors du stockage)
+	- get ringbuffer
 
 
 ## Compiler

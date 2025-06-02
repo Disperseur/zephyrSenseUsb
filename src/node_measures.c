@@ -65,14 +65,19 @@ void _handler_measures(void*, void*, void*) {
         board.sensors.data.gyro.gy      = sensor_value_to_milli(&gyr[1]);
         board.sensors.data.gyro.gz      = sensor_value_to_milli(&gyr[2]);
 
-
-        if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n", timestamp, board.sensors.data.temperature);
-        if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n", timestamp, board.sensors.data.humidity);
-        if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n", timestamp, board.sensors.data.pressure);
-        if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n", timestamp, board.sensors.data.altitude);
-        if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
-        if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
-        // printk("\n");
+        if(board.mode == ONESHOT || board.mode == STREAMING) {
+            if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n", timestamp, board.sensors.data.temperature);
+            if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n", timestamp, board.sensors.data.humidity);
+            if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n", timestamp, board.sensors.data.pressure);
+            if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n", timestamp, board.sensors.data.altitude);
+            if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
+            if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
+            // printk("\n");
+        }
+        else if(board.mode == RINGBUFFER) {
+            board.sensors.ringbuffer[board.sensors.ringbuffer_index%RINGBUFFER_SIZE] = board.sensors.data; // possible source de problemes de pointeurs
+            board.sensors.ringbuffer_index++;
+        }
     }
 }
 
