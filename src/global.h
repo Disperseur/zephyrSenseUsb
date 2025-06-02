@@ -10,7 +10,7 @@
 #define LED_GREEN  DT_ALIAS(led1)
 #define LED_BLUE   DT_ALIAS(led2)
 #define COMMAND_BUFFER_SIZE 100
-#define RINGBUFFER_SIZE 10
+#define RINGBUFFER_SIZE 100
 
 typedef enum {  RUNNING,
                 STOPPED,

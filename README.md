@@ -1,9 +1,9 @@
 # Projet capteur USB
 
 ## TODO
-- ringbuffer mode:
-	- enregistrement (v1 mais peut etre pb de poiteur lors du stockage)
-	- get ringbuffer
+- trigger
+	- SET TRIGGER TEMPERATURE SUP 20
+	- RESET TRIGGER
 
 
 ## Compiler
