@@ -20,7 +20,7 @@ void node_measures_init(void) {
 
 void _handler_measures(void*, void*, void*) {
     int ret;
-    uint32_t timestamp;
+    // uint32_t timestamp;
     struct sensor_value val_pressure, val_temperature, val_humidity;
     struct sensor_value acc[3], gyr[3];
 
@@ -52,7 +52,7 @@ void _handler_measures(void*, void*, void*) {
             if(ret != 0) printk("failed to get gyr: %d\n", ret);
         }
 
-        timestamp = k_uptime_get_32();
+        board.sensors.data.timestamp    = k_uptime_get_32();
 
         board.sensors.data.temperature  = sensor_value_to_milli(&val_temperature);
         board.sensors.data.humidity     = sensor_value_to_milli(&val_humidity);
@@ -66,12 +66,12 @@ void _handler_measures(void*, void*, void*) {
         board.sensors.data.gyro.gz      = sensor_value_to_milli(&gyr[2]);
 
         if(board.mode == ONESHOT || board.mode == STREAMING) {
-            if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n", timestamp, board.sensors.data.temperature);
-            if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n", timestamp, board.sensors.data.humidity);
-            if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n", timestamp, board.sensors.data.pressure);
-            if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n", timestamp, board.sensors.data.altitude);
-            if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
-            if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
+            if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n",         board.sensors.data.timestamp, board.sensors.data.temperature);
+            if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n",            board.sensors.data.timestamp, board.sensors.data.humidity);
+            if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n",            board.sensors.data.timestamp, board.sensors.data.pressure);
+            if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n",            board.sensors.data.timestamp, board.sensors.data.altitude);
+            if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
+            if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
             // printk("\n");
         }
         else if(board.mode == RINGBUFFER) {

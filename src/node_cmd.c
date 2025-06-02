@@ -130,13 +130,13 @@ void _handler_cmd(void*, void*, void*) {
         else if(strncmp(board.command_buffer, "GET RINGBUFFER", 14) == 0) {
             // afficher ringbuffer
             for(int i = 0; i<RINGBUFFER_SIZE; i++) {
-                printk("%3d TEMPERATURE %lld\n", board.sensors.ringbuffer[i].temperature);
-                printk("%3d HUMIDITY %lld\n", board.sensors.ringbuffer[i].humidity);
-                printk("%3d PRESSURE %lld\n", board.sensors.ringbuffer[i].pressure);
-                printk("%3d ALTITUDE %lld\n", board.sensors.ringbuffer[i].altitude);
-                printk("%3d ACCEL_LIN %lld %lld %lld\n", board.sensors.ringbuffer[i].accel.ax, board.sensors.ringbuffer[i].accel.ay, board.sensors.ringbuffer[i].accel.az);
-                printk("%3d ACCEL_ROT %lld %lld %lld\n", board.sensors.ringbuffer[i].gyro.gx, board.sensors.ringbuffer[i].gyro.gy, board.sensors.ringbuffer[i].gyro.gz);
-                printk("\n");
+                printk("%d %d TEMPERATURE %lld\n",         i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].temperature);
+                printk("%d %d HUMIDITY %lld\n",            i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].humidity);
+                printk("%d %d PRESSURE %lld\n",            i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].pressure);
+                printk("%d %d ALTITUDE %lld\n",            i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].altitude);
+                printk("%d %d ACCEL_LIN %lld %lld %lld\n", i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].accel.ax, board.sensors.ringbuffer[i].accel.ay, board.sensors.ringbuffer[i].accel.az);
+                printk("%d %d ACCEL_ROT %lld %lld %lld\n", i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].gyro.gx, board.sensors.ringbuffer[i].gyro.gy, board.sensors.ringbuffer[i].gyro.gz);
+                // printk("\n");
             }
         }
         else if(strncmp(board.command_buffer, "START", 5) == 0) {

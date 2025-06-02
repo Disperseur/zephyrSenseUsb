@@ -43,6 +43,7 @@ typedef struct _gyro_t {
 } gyro_t;
 
 typedef struct _data_t {
+    uint32_t timestamp;
     int64_t temperature, humidity, pressure, altitude;
     accel_t accel;
     gyro_t  gyro;
@@ -63,7 +64,7 @@ typedef struct _sensors_t {
     data_t ringbuffer[RINGBUFFER_SIZE];
 
     devices_t devices;
-    
+
     unsigned int period;
     unsigned int ringbuffer_index;
 } sensors_t;
