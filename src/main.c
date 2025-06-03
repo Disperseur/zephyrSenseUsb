@@ -25,7 +25,12 @@ board_t board = {
 	
     .status  						= STOPPED,
 	.mode							= RINGBUFFER,
-	.sensor_type					= ALL
+	.sensor_type					= ALL,
+
+    .trigger1 = {
+        .triggered_sensor           = NONE,
+        .comp                       = SUP
+    }
 };
 
 int main(void)

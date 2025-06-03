@@ -12,10 +12,9 @@ struct k_timer timer_measures;
 void node_measures_init(void) {
     k_sem_init(&sem_measures, 0, 1);
     k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area),
-                    _handler_measures, NULL, NULL, NULL, 1, 0, K_NO_WAIT);
+                    _handler_measures, NULL, NULL, NULL, THREAD_MEASURES_PRIO, 0, K_NO_WAIT);
 
     k_timer_init(&timer_measures, _cb_timer_measures, NULL);
-    // k_timer_start(&timer_measures, K_MSEC(board.sensors.period), K_MSEC(board.sensors.period));
 }
 
 void _handler_measures(void*, void*, void*) {

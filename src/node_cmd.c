@@ -12,7 +12,7 @@ struct k_sem sem_cmd;
 void node_cmd_init(void) {
     k_sem_init(&sem_cmd, 0, 1);
     k_thread_create(&cmd_thread_data, cmd_thread_stack_area, K_THREAD_STACK_SIZEOF(cmd_thread_stack_area),
-                    _handler_cmd, NULL, NULL, NULL, 5, 0, K_NO_WAIT);
+                    _handler_cmd, NULL, NULL, NULL, THREAD_CMD_PRIO, 0, K_NO_WAIT);
 
     uart_irq_callback_set(board.console, _cb_uart_rx);
     uart_irq_rx_enable(board.console);
@@ -226,6 +226,53 @@ void _handler_cmd(void*, void*, void*) {
                 if(200 <= period && period <= 10000) {
                     board.sensors.period = period;
                     printk("DONE\n");
+                }
+            }
+
+            if(strstr(board.command_buffer, "TRIGGER") != NULL) {
+                if(strstr(board.command_buffer, "NONE") != NULL) {
+                    board.sensor_type = NONE;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
+                    board.sensor_type = TEMPERATURE;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "PRESSURE") != NULL) {
+                    board.sensor_type = PRESSURE;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
+                    board.sensor_type = HUMIDITY;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
+                    board.sensor_type = ALTITUDE;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "ACCELERATION") != NULL) {
+                    board.sensor_type = ACCELERATION;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
+                    board.sensor_type = GYROSCOPE;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "MAGFIELD") != NULL) {
+                    board.sensor_type = MAGFIELD;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "ALL") != NULL) {
+                    board.sensor_type = ALL;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "ENV") != NULL) {
+                    board.sensor_type = ENV;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "MOTION") != NULL) {
+                    board.sensor_type = MOTION;
+                    printk("DONE");
                 }
             }
         }

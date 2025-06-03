@@ -12,6 +12,13 @@
 #define COMMAND_BUFFER_SIZE 100
 #define RINGBUFFER_SIZE 100
 
+#define THREAD_CMD_PRIO 5
+#define THREAD_MEASURES_PRIO 1
+
+typedef enum {  SUP,
+                INF,
+                EQL} _trigger_comp_t;
+
 typedef enum {  RUNNING,
                 STOPPED,
                 FAULT} _board_status_t;
@@ -69,6 +76,12 @@ typedef struct _sensors_t {
     unsigned int ringbuffer_index;
 } sensors_t;
 
+typedef struct _trigger_t {
+    _sensor_type_t triggered_sensor;
+    _trigger_comp_t comp;
+} trigger_t;
+
+
 typedef struct _board_t {
     rgbled_t led;
     sensors_t sensors;
@@ -78,6 +91,10 @@ typedef struct _board_t {
     _board_status_t status;
     _board_mode_t mode;
     _sensor_type_t sensor_type;
+
+    // trigger section
+    trigger_t trigger1;
+
 } board_t;
 
 extern board_t board;
