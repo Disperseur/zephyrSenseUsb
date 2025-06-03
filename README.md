@@ -2,7 +2,6 @@
 
 ## TODO
 - trigger
-	- SET TRIGGER TEMPERATURE SUP 20
 	- RESET TRIGGER
 
 

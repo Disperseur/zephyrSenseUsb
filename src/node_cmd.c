@@ -139,6 +139,56 @@ void _handler_cmd(void*, void*, void*) {
                 // printk("\n");
             }
         }
+        else if(strncmp(board.command_buffer, "GET TRIGGER1", 12) == 0) {
+            printk("TRIGGER1 EN %d\n", board.trigger1.trigger_en);
+            printk("TRIGGER1 TRIGGERED_SENSOR ");
+            switch (board.trigger1.triggered_sensor)
+            {
+            case TEMPERATURE:
+                printk("TEMPERATURE\n");
+                break;
+
+            case PRESSURE:
+                printk("PRESSURE\n");
+                break;
+
+            case HUMIDITY:
+                printk("HUMIDITY\n");
+                break;
+
+            case ALTITUDE:
+                printk("ALTITUDE\n");
+                break;
+
+            case NONE:
+                printk("NONE\n");
+                break;
+            
+            default:
+                printk("UNKNOWN\n");
+                break;
+            }
+            printk("TRIGGER1 COMP ");
+            switch (board.trigger1.comp)
+            {
+            case SUP:
+                printk("SUP\n");
+                break;
+            
+            case INF:
+                printk("INF\n");
+                break;
+
+            case EQL:
+                printk("EQU\n");
+                break;
+            
+            default:
+                printk("UNKNOWN\n");
+                break;
+            }
+            printk("TRIGGER1 FLOOR %d\n", board.trigger1.floor);
+        }
         else if(strncmp(board.command_buffer, "START", 5) == 0) {
             if(board.status == STOPPED) {
                     if(board.mode == STREAMING || board.mode == RINGBUFFER) {
@@ -229,52 +279,47 @@ void _handler_cmd(void*, void*, void*) {
                 }
             }
 
-            if(strstr(board.command_buffer, "TRIGGER") != NULL) {
+            if(strstr(board.command_buffer, "TRIGGER1") != NULL) {
                 if(strstr(board.command_buffer, "NONE") != NULL) {
-                    board.sensor_type = NONE;
+                    board.trigger1.triggered_sensor = NONE;
+                    board.trigger1.trigger_en = false;
                     printk("DONE");
                 }
                 if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
-                    board.sensor_type = TEMPERATURE;
+                    board.trigger1.triggered_sensor = TEMPERATURE;
+                    board.trigger1.trigger_en = true;
                     printk("DONE");
                 }
                 if(strstr(board.command_buffer, "PRESSURE") != NULL) {
-                    board.sensor_type = PRESSURE;
+                    board.trigger1.triggered_sensor = PRESSURE;
+                    board.trigger1.trigger_en = true;
                     printk("DONE");
                 }
                 if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
-                    board.sensor_type = HUMIDITY;
+                    board.trigger1.triggered_sensor = HUMIDITY;
+                    board.trigger1.trigger_en = true;
                     printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
-                    board.sensor_type = ALTITUDE;
+                    board.trigger1.triggered_sensor = ALTITUDE;
+                    board.trigger1.trigger_en = true;
                     printk("DONE");
                 }
-                if(strstr(board.command_buffer, "ACCELERATION") != NULL) {
-                    board.sensor_type = ACCELERATION;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
-                    board.sensor_type = GYROSCOPE;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "MAGFIELD") != NULL) {
-                    board.sensor_type = MAGFIELD;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "ALL") != NULL) {
-                    board.sensor_type = ALL;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "ENV") != NULL) {
-                    board.sensor_type = ENV;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "MOTION") != NULL) {
-                    board.sensor_type = MOTION;
-                    printk("DONE");
+                
+                // traitement de la limite dans une commande separee
+                if(strstr(board.command_buffer, "VALUE") != NULL) {
+                    int floor = atoi(board.command_buffer+19);
+                    if(floor != 0) {
+                        board.trigger1.floor = floor;
+                        printk("DONE\n");
+                    }
                 }
             }
+        }
+
+        // command buffer erase
+        for(int i = 0; i<COMMAND_BUFFER_SIZE; i++) {
+            board.command_buffer[i] = 0;
         }
     }
 }

@@ -77,8 +77,10 @@ typedef struct _sensors_t {
 } sensors_t;
 
 typedef struct _trigger_t {
+    bool trigger_en;
     _sensor_type_t triggered_sensor;
     _trigger_comp_t comp;
+    int floor;
 } trigger_t;
 
 

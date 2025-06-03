@@ -28,8 +28,10 @@ board_t board = {
 	.sensor_type					= ALL,
 
     .trigger1 = {
+        .trigger_en                 = false,
         .triggered_sensor           = NONE,
-        .comp                       = SUP
+        .comp                       = SUP,
+        .floor                      = 0
     }
 };
 
