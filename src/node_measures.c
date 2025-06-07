@@ -65,15 +65,59 @@ void _handler_measures(void*, void*, void*) {
         board.sensors.data.gyro.gz      = sensor_value_to_milli(&gyr[2]);
 
         if(board.mode == ONESHOT || board.mode == STREAMING) {
-            if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n",         board.sensors.data.timestamp, board.sensors.data.temperature);
-            if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n",            board.sensors.data.timestamp, board.sensors.data.humidity);
-            if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n",            board.sensors.data.timestamp, board.sensors.data.pressure);
-            if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n",            board.sensors.data.timestamp, board.sensors.data.altitude);
-            if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
-            if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
-            // printk("\n");
+            int64_t *value;
+
+            if(board.trigger1.trigger_en) {
+                // cas trigger allume
+                switch (board.trigger1.triggered_sensor)
+                {
+                case TEMPERATURE:
+                    value = &board.sensors.data.temperature;
+                    break;
+
+                case PRESSURE:
+                    value = &board.sensors.data.pressure;
+                    break;
+
+                case HUMIDITY:
+                    value = &board.sensors.data.humidity;
+                    break;
+
+                case ALTITUDE:
+                    value = &board.sensors.data.altitude;
+                    break;
+                
+                default:
+                    value = &board.sensors.data.temperature;
+                    break;
+                }
+
+
+                if( ((*value > board.trigger1.floor) && (board.trigger1.comp == SUP)) ||
+                    ((*value < board.trigger1.floor) && (board.trigger1.comp == INF))
+                ) {
+                    if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n",         board.sensors.data.timestamp, board.sensors.data.temperature);
+                    if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n",            board.sensors.data.timestamp, board.sensors.data.humidity);
+                    if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n",            board.sensors.data.timestamp, board.sensors.data.pressure);
+                    if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n",            board.sensors.data.timestamp, board.sensors.data.altitude);
+                    if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
+                    if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
+                    // printk("\n");
+                }
+            }
+            else {
+                // pas de trigger
+                if(board.sensor_type == TEMPERATURE     || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d TEMPERATURE %lld\n",         board.sensors.data.timestamp, board.sensors.data.temperature);
+                if(board.sensor_type == HUMIDITY        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d HUMIDITY %lld\n",            board.sensors.data.timestamp, board.sensors.data.humidity);
+                if(board.sensor_type == PRESSURE        || board.sensor_type == ENV     || board.sensor_type == ALL)    printk("%d PRESSURE %lld\n",            board.sensors.data.timestamp, board.sensors.data.pressure);
+                if(board.sensor_type == ALTITUDE        || board.sensor_type == ALL)                                    printk("%d ALTITUDE %lld\n",            board.sensors.data.timestamp, board.sensors.data.altitude);
+                if(board.sensor_type == ACCELERATION    || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_LIN %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.accel.ax, board.sensors.data.accel.ay, board.sensors.data.accel.az);
+                if(board.sensor_type == GYROSCOPE       || board.sensor_type == MOTION  || board.sensor_type == ALL)    printk("%d ACCEL_ROT %lld %lld %lld\n", board.sensors.data.timestamp, board.sensors.data.gyro.gx,  board.sensors.data.gyro.gy,  board.sensors.data.gyro.gz);        
+                // printk("\n");
+            }
         }
         else if(board.mode == RINGBUFFER) {
+            // mecanisme de trigger pas implemente pour le ringbuffer encore
             board.sensors.ringbuffer[board.sensors.ringbuffer_index%RINGBUFFER_SIZE] = board.sensors.data; // possible source de problemes de pointeurs
             board.sensors.ringbuffer_index++;
         }

@@ -3,7 +3,7 @@
 ## TODO
 - trigger
 	- RESET TRIGGER
-
+	- EQU ? peut etre le retirer
 
 ## Compiler
 
