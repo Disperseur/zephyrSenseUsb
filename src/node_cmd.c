@@ -25,6 +25,29 @@ void _handler_cmd(void*, void*, void*) {
         /*traitement de la commande*/
         printk("ACK\n");
 
+        if(strncmp(board.command_buffer, "HELP", 4) == 0) {
+            printk("List of available commands in this shell :\n");
+            printk("\n");
+            printk("GET STATUS\n");
+            printk("GET MODE\n");
+            printk("GET SENSORS\n");
+            printk("GET SPEED\n");
+            printk("GET RINGBUFFER\n");
+            printk("GET TRIGGER1\n");
+            printk("\n");
+            printk("START\n");
+            printk("STOP\n");
+            printk("\n");
+            printk("SET MODE \t<ONESHOT|STREAMING|RINGBUFFER>\n");
+            printk("SET SENSORS \t<TEMPERATURE|HUMIDITY|PRESSURE|ALTITUDE|ACCELERATION|GYROSCOPE|ALL|ENV|MOTION>\n");
+            printk("SET SPEED \t<int period in ms between each measure>\n");
+            printk("SET TRIGGER1 \t<ON|OFF>\n");
+            printk("SET TRIGGER1 \tSENSOR <TEMPERATURE|PRESSURE|HUMIDITY|ALTITUDE>\n");
+            printk("SET TRIGGER1 \tCOMP <SUP|INF>\n");
+            printk("SET TRIGGER1 \tFLOOR <int value in unit*1000 used by the trigger to compare>\n");
+            printk("\n");
+        }
+
         if(strncmp(board.command_buffer, "GET STATUS", 10) == 0) {
             printk("STATUS ");
 
@@ -252,10 +275,6 @@ void _handler_cmd(void*, void*, void*) {
                 }
                 if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
                     board.sensor_type = GYROSCOPE;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "MAGFIELD") != NULL) {
-                    board.sensor_type = MAGFIELD;
                     printk("DONE");
                 }
                 if(strstr(board.command_buffer, "ALL") != NULL) {

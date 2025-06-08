@@ -1,7 +1,8 @@
 # Projet capteur USB
 
 ## TODO
-- DONE : a deplacer aux bons endroits et pas dans le noeud de recup des commandes
+
+## Remarques diverses
 
 Temps min pour avoir les valeurs de tout les capteurs : 55ms (environ). Donc frequence max : 18Hz
 Ce qui prends le plus de temps dans le noeud de mesures: les mesures. Donc mettre le post traitement des donnees ailleurs n'améliorerait rien. Il faut revoir l'aquisition sans utiliser l'api de zephyr et utiliser directement les commandes i2c.
