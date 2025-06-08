@@ -269,7 +269,7 @@ void _handler_cmd(void*, void*, void*) {
 
             if(strstr(board.command_buffer, "PERIOD") != NULL) {
                 int period = atoi(board.command_buffer+11);
-                if(200 <= period && period <= 10000) {
+                if(0 <= period && period <= 10000) {
                     board.sensors.period = period;
                     printk("DONE\n");
                 }

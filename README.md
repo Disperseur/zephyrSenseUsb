@@ -3,7 +3,10 @@
 ## TODO
 - trigger
 	- RESET TRIGGER
-	- EQU ? peut etre le retirer
+	- dissocier demarrage trigger de config
+
+Max speed des mesures: 60 ms / 16.6Hz
+
 
 ## Compiler
 
