@@ -5,7 +5,7 @@
 	- RESET TRIGGER
 	- dissocier demarrage trigger de config
 
-Max speed des mesures: 60 ms / 16.6Hz
+Temps min pour avoir les valeurs de tout les capteurs : 55ms (environ). Donc frequence max : 18Hz
 
 
 ## Compiler
