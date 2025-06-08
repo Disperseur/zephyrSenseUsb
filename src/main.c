@@ -39,12 +39,13 @@ int main(void)
 {
     node_led_init();
 
-    uint32_t dtr = 0;
+    
     if (usb_enable(NULL)) {
         printk("Failed to start USB\n");
         while(1);
     }
 
+    // uint32_t dtr = 0;
     // while (!dtr) {
     //     uart_line_ctrl_get(board.console, UART_LINE_CTRL_DTR, &dtr);
     //     k_sleep(K_MSEC(100));
