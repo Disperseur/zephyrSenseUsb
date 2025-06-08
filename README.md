@@ -3,7 +3,10 @@
 ## TODO
 - trigger
 	- RESET TRIGGER
-	- EQU ? peut etre le retirer
+	- dissocier demarrage trigger de config
+
+Temps min pour avoir les valeurs de tout les capteurs : 55ms (environ). Donc frequence max : 18Hz
+
 
 ## Compiler
 

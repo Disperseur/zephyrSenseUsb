@@ -124,8 +124,8 @@ void _handler_cmd(void*, void*, void*) {
                 break;
             }
         }
-        else if(strncmp(board.command_buffer, "GET PERIOD", 10) == 0) {
-            printk("PERIOD %d\n", board.sensors.period);
+        else if(strncmp(board.command_buffer, "GET SPEED", 9) == 0) {
+            printk("SPEED %d\n", board.sensors.period);
         }
         else if(strncmp(board.command_buffer, "GET RINGBUFFER", 14) == 0) {
             // afficher ringbuffer
@@ -267,9 +267,9 @@ void _handler_cmd(void*, void*, void*) {
                 }
             }
 
-            if(strstr(board.command_buffer, "PERIOD") != NULL) {
-                int period = atoi(board.command_buffer+11);
-                if(200 <= period && period <= 10000) {
+            if(strstr(board.command_buffer, "SPEED") != NULL) {
+                int period = atoi(board.command_buffer+10);
+                if(0 <= period && period <= 10000) {
                     board.sensors.period = period;
                     printk("DONE\n");
                 }

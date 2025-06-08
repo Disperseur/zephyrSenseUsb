@@ -3,6 +3,7 @@
         "device.h": "c",
         "sensor.h": "c",
         "log.h": "c",
-        "printk.h": "c"
+        "printk.h": "c",
+        "cstring": "c"
     }
 }

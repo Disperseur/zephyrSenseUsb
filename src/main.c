@@ -24,7 +24,7 @@ board_t board = {
     .console 						= DEVICE_DT_GET(DT_CHOSEN(zephyr_console)),
 	
     .status  						= STOPPED,
-	.mode							= RINGBUFFER,
+	.mode							= STREAMING,
 	.sensor_type					= ALL,
 
     .trigger1 = {

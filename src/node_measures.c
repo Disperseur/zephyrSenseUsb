@@ -10,7 +10,7 @@ struct k_sem sem_measures;
 struct k_timer timer_measures;
 
 void node_measures_init(void) {
-    k_sem_init(&sem_measures, 0, 1);
+    k_sem_init(&sem_measures, 0, 100);
     k_thread_create(&measures_thread_data, measures_thread_stack_area, K_THREAD_STACK_SIZEOF(measures_thread_stack_area),
                     _handler_measures, NULL, NULL, NULL, THREAD_MEASURES_PRIO, 0, K_NO_WAIT);
 
@@ -25,6 +25,12 @@ void _handler_measures(void*, void*, void*) {
 
     while (1) {
         k_sem_take(&sem_measures, K_FOREVER);
+
+        // check si trop rapide
+        unsigned int nb_measures_todo = k_sem_count_get(&sem_measures);
+        if(nb_measures_todo > 0) {
+            printk("BACKLOG %d\n", nb_measures_todo); // peut etre a afficher systematiquement pour simplifier la gestion cote API
+        }
 
         ret = sensor_sample_fetch(board.sensors.devices.sensor_pressure);
         if(ret != 0) printk("failed to fetch pressure sensor: %d\n", ret);
