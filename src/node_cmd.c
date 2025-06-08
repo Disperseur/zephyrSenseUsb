@@ -206,7 +206,7 @@ void _handler_cmd(void*, void*, void*) {
             if(board.status == RUNNING) {
                 k_timer_stop(&timer_measures);
                 board.status = STOPPED;
-                printk("DONE");
+                // printk("DONE"); // deplace dans le noeud de mesures pour attendre la fin des mesures lancees avant de dire que c'est fait
             }
         }
         else if(strncmp(board.command_buffer, "SET", 3) == 0 && board.status == STOPPED) {

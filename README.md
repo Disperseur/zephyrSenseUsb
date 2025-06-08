@@ -1,11 +1,6 @@
 # Projet capteur USB
 
 ## TODO
-- trigger
-	- RESET TRIGGER
-	- dissocier demarrage trigger de config
-	- pouvoir changer sup inf
-
 - DONE : a deplacer aux bons endroits et pas dans le noeud de recup des commandes
 
 Temps min pour avoir les valeurs de tout les capteurs : 55ms (environ). Donc frequence max : 18Hz

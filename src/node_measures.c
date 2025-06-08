@@ -19,15 +19,15 @@ void node_measures_init(void) {
 
 void _handler_measures(void*, void*, void*) {
     int ret;
-    // uint32_t timestamp;
     struct sensor_value val_pressure, val_temperature, val_humidity;
     struct sensor_value acc[3], gyr[3];
+    unsigned int nb_measures_todo = 0;
 
     while (1) {
         k_sem_take(&sem_measures, K_FOREVER);
 
         // check si trop rapide
-        unsigned int nb_measures_todo = k_sem_count_get(&sem_measures);
+        nb_measures_todo = k_sem_count_get(&sem_measures);
         if(nb_measures_todo > 0) {
             printk("BACKLOG %d\n", nb_measures_todo); // peut etre a afficher systematiquement pour simplifier la gestion cote API
         }
@@ -126,6 +126,10 @@ void _handler_measures(void*, void*, void*) {
             // mecanisme de trigger pas implemente pour le ringbuffer encore
             board.sensors.ringbuffer[board.sensors.ringbuffer_index%RINGBUFFER_SIZE] = board.sensors.data; // possible source de problemes de pointeurs
             board.sensors.ringbuffer_index++;
+        }
+
+        if(board.status == STOPPED && nb_measures_todo == 0) {
+            printk("DONE\n");
         }
     }
 }
