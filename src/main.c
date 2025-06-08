@@ -45,10 +45,10 @@ int main(void)
         while(1);
     }
 
-    while (!dtr) {
-        uart_line_ctrl_get(board.console, UART_LINE_CTRL_DTR, &dtr);
-        k_sleep(K_MSEC(100));
-    }
+    // while (!dtr) {
+    //     uart_line_ctrl_get(board.console, UART_LINE_CTRL_DTR, &dtr);
+    //     k_sleep(K_MSEC(100));
+    // }
 
     node_cmd_init();
 
