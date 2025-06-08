@@ -29,7 +29,7 @@ board_t board = {
 
     .trigger1 = {
         .trigger_en                 = false,
-        .triggered_sensor           = NONE,
+        .triggered_sensor           = TEMPERATURE,
         .comp                       = SUP,
         .floor                      = 0
     }

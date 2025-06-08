@@ -140,8 +140,11 @@ void _handler_cmd(void*, void*, void*) {
             }
         }
         else if(strncmp(board.command_buffer, "GET TRIGGER1", 12) == 0) {
-            printk("TRIGGER1 EN %d\n", board.trigger1.trigger_en);
-            printk("TRIGGER1 TRIGGERED_SENSOR ");
+            printk("TRIGGER1 ");
+            if(board.trigger1.trigger_en) printk("ON\n");
+            else printk("OFF\n");
+
+            printk("TRIGGER1 SENSOR ");
             switch (board.trigger1.triggered_sensor)
             {
             case TEMPERATURE:
@@ -168,6 +171,7 @@ void _handler_cmd(void*, void*, void*) {
                 printk("UNKNOWN\n");
                 break;
             }
+
             printk("TRIGGER1 COMP ");
             switch (board.trigger1.comp)
             {
@@ -183,6 +187,7 @@ void _handler_cmd(void*, void*, void*) {
                 printk("UNKNOWN\n");
                 break;
             }
+
             printk("TRIGGER1 FLOOR %d\n", board.trigger1.floor);
         }
         else if(strncmp(board.command_buffer, "START", 5) == 0) {
@@ -276,29 +281,41 @@ void _handler_cmd(void*, void*, void*) {
             }
 
             if(strstr(board.command_buffer, "TRIGGER1") != NULL) {
-                if(strstr(board.command_buffer, "NONE") != NULL) {
-                    board.trigger1.triggered_sensor = NONE;
+                if(strstr(board.command_buffer, "ON") != NULL) {
+                    board.trigger1.trigger_en = true;
+                    printk("DONE");
+                }
+                if(strstr(board.command_buffer, "OFF") != NULL) {
                     board.trigger1.trigger_en = false;
                     printk("DONE");
                 }
-                if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
-                    board.trigger1.triggered_sensor = TEMPERATURE;
-                    board.trigger1.trigger_en = true;
+
+                if(strstr(board.command_buffer, "SENSOR") != NULL) {
+                    if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
+                        board.trigger1.triggered_sensor = TEMPERATURE;
+                        printk("DONE");
+                    }
+                    if(strstr(board.command_buffer, "PRESSURE") != NULL) {
+                        board.trigger1.triggered_sensor = PRESSURE;
+                        printk("DONE");
+                    }
+                    if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
+                        board.trigger1.triggered_sensor = HUMIDITY;
+                        printk("DONE");
+                    }
+                    if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
+                        board.trigger1.triggered_sensor = ALTITUDE;
+                        printk("DONE");
+                    }
+                }
+
+                if(strstr(board.command_buffer, "COMP SUP") != NULL) {
+                    board.trigger1.comp = SUP;
                     printk("DONE");
                 }
-                if(strstr(board.command_buffer, "PRESSURE") != NULL) {
-                    board.trigger1.triggered_sensor = PRESSURE;
-                    board.trigger1.trigger_en = true;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
-                    board.trigger1.triggered_sensor = HUMIDITY;
-                    board.trigger1.trigger_en = true;
-                    printk("DONE");
-                }
-                if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
-                    board.trigger1.triggered_sensor = ALTITUDE;
-                    board.trigger1.trigger_en = true;
+
+                if(strstr(board.command_buffer, "COMP INF") != NULL) {
+                    board.trigger1.comp = INF;
                     printk("DONE");
                 }
                 
