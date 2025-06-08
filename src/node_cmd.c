@@ -178,10 +178,6 @@ void _handler_cmd(void*, void*, void*) {
             case INF:
                 printk("INF\n");
                 break;
-
-            case EQL:
-                printk("EQU\n");
-                break;
             
             default:
                 printk("UNKNOWN\n");
@@ -307,7 +303,7 @@ void _handler_cmd(void*, void*, void*) {
                 }
                 
                 // traitement de la limite dans une commande separee
-                if(strstr(board.command_buffer, "VALUE") != NULL) {
+                if(strstr(board.command_buffer, "FLOOR") != NULL) {
                     int floor = atoi(board.command_buffer+19);
                     if(floor != 0) {
                         board.trigger1.floor = floor;

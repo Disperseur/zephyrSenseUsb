@@ -16,8 +16,7 @@
 #define THREAD_MEASURES_PRIO 1
 
 typedef enum {  SUP,
-                INF,
-                EQL} _trigger_comp_t;
+                INF} _trigger_comp_t;
 
 typedef enum {  RUNNING,
                 STOPPED,
