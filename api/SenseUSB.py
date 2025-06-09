@@ -125,13 +125,13 @@ class SenseUSB:
         self.status = "RUNNING"
 
     def stop(self):
-        if(self.status == "RUNNING"):
-            self.port.write("STOP\n".encode())
-            
-            assert(self.wait(SENSOR_ACK) == 1)
-            assert(self.wait(SENSOR_DONE) == 1)
-            
-            self.status = "STOPPED"
+        assert(self.status == "RUNNING")
+        self.port.write("STOP\n".encode())
+        
+        assert(self.wait(SENSOR_ACK) == 1)
+        assert(self.wait(SENSOR_DONE) == 1)
+        
+        self.status = "STOPPED"
 
 
 
@@ -169,6 +169,7 @@ class SenseUSB:
         # recuperation des mesures
         for i in range(size):
             measure = self.port.readline().decode()[:-1].split()
+            # print(measure)
 
             if(measure[2] in ["ACCEL_LIN", "ACCEL_ROT"]):
                 ringbuffer.append([ int(measure[0]),

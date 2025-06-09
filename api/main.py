@@ -36,9 +36,15 @@ sensor = SenseUSB("/dev/ttyACM0")
 
 
 
+sensor.set_speed(100)
+sensor.set_mode("RINGBUFFER")
+sensor.start()
+sleep(2)
+sensor.stop()
+buffer = sensor.get_ringbuffer()
 
-
-
+for l in buffer:
+    print(l)
 
 
 # commandes en test

@@ -127,10 +127,6 @@ void _handler_measures(void*, void*, void*) {
             board.sensors.ringbuffer[board.sensors.ringbuffer_index%RINGBUFFER_SIZE] = board.sensors.data; // possible source de problemes de pointeurs
             board.sensors.ringbuffer_index++;
         }
-
-        if(board.status == STOPPED && nb_measures_todo == 0) {
-            printk("DONE\n");
-        }
     }
 }
 

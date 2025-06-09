@@ -1,6 +1,8 @@
 # Projet capteur USB
 
 ## TODO
+- regler pb de DONE en streaming publie avant fin effective des mesures
+
 
 ## Remarques diverses
 

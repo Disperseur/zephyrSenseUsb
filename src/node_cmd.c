@@ -153,7 +153,7 @@ void _handler_cmd(void*, void*, void*) {
         else if(strncmp(board.command_buffer, "GET RINGBUFFER", 14) == 0) {
             // afficher la taille pour le decodage
             printk("RINGBUFFER %d\n", RINGBUFFER_SIZE);
-            
+
             // afficher ringbuffer
             for(int i = 0; i<RINGBUFFER_SIZE; i++) {
                 printk("%d %d TEMPERATURE %lld\n",         i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].temperature);
@@ -231,9 +231,10 @@ void _handler_cmd(void*, void*, void*) {
         else if(strncmp(board.command_buffer, "STOP", 4) == 0) {
             if(board.status == RUNNING) {
                 k_timer_stop(&timer_measures);
-                k_sem_give(&sem_measures); //pour avoir un "DONE" dans tout les cas
+                //k_sem_give(&sem_measures); //pour avoir un "DONE" dans tout les cas
                 board.status = STOPPED;
-                // printk("DONE\n"); // deplace dans le noeud de mesures pour attendre la fin des mesures lancees avant de dire que c'est fait
+
+                printk("DONE\n");
             }
         }
         else if(strncmp(board.command_buffer, "SET", 3) == 0 && board.status == STOPPED) {
