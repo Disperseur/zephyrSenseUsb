@@ -53,7 +53,7 @@ int main(void)
 
     node_cmd_init();
 
-    printk("STARTING\n");
+    // printk("STARTING\n");
     while (!device_is_ready(board.sensors.devices.sensor_pressure)) {
         board.status = FAULT;
         printk("Device %s is not ready\n", board.sensors.devices.sensor_pressure->name);
@@ -67,7 +67,7 @@ int main(void)
         printk("Device %s is not ready\n", board.sensors.devices.sensor_acceleration->name);
         k_sleep(K_SECONDS(1));
     }
-    printk("STARTED\n");
+    // printk("STARTED\n");
 
     setup_sensor_acceleration(board.sensors.devices.sensor_acceleration);
 

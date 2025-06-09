@@ -151,6 +151,9 @@ void _handler_cmd(void*, void*, void*) {
             printk("SPEED %d\n", board.sensors.period);
         }
         else if(strncmp(board.command_buffer, "GET RINGBUFFER", 14) == 0) {
+            // afficher la taille pour le decodage
+            printk("RINGBUFFER %d\n", RINGBUFFER_SIZE);
+            
             // afficher ringbuffer
             for(int i = 0; i<RINGBUFFER_SIZE; i++) {
                 printk("%d %d TEMPERATURE %lld\n",         i, board.sensors.ringbuffer[i].timestamp, board.sensors.ringbuffer[i].temperature);
@@ -222,72 +225,73 @@ void _handler_cmd(void*, void*, void*) {
                     else if(board.mode == ONESHOT) {
                         k_sem_give(&sem_measures); // give directement le semaphore pour faire une mesure
                     }
-                printk("DONE");
+                printk("DONE\n");
             }
         }
         else if(strncmp(board.command_buffer, "STOP", 4) == 0) {
             if(board.status == RUNNING) {
                 k_timer_stop(&timer_measures);
+                k_sem_give(&sem_measures); //pour avoir un "DONE" dans tout les cas
                 board.status = STOPPED;
-                // printk("DONE"); // deplace dans le noeud de mesures pour attendre la fin des mesures lancees avant de dire que c'est fait
+                // printk("DONE\n"); // deplace dans le noeud de mesures pour attendre la fin des mesures lancees avant de dire que c'est fait
             }
         }
         else if(strncmp(board.command_buffer, "SET", 3) == 0 && board.status == STOPPED) {
             if(strstr(board.command_buffer, "MODE") != NULL) {
                 if(strstr(board.command_buffer, "STREAMING") != NULL) {
                     board.mode = STREAMING;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "ONESHOT") != NULL) {
                     board.mode = ONESHOT;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "RINGBUFFER") != NULL) {
                     board.mode = RINGBUFFER;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
             }
 
             if(strstr(board.command_buffer, "SENSORS") != NULL) {
                 if(strstr(board.command_buffer, "NONE") != NULL) {
                     board.sensor_type = NONE;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
                     board.sensor_type = TEMPERATURE;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "PRESSURE") != NULL) {
                     board.sensor_type = PRESSURE;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
                     board.sensor_type = HUMIDITY;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
                     board.sensor_type = ALTITUDE;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "ACCELERATION") != NULL) {
                     board.sensor_type = ACCELERATION;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "GYROSCOPE") != NULL) {
                     board.sensor_type = GYROSCOPE;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "ALL") != NULL) {
                     board.sensor_type = ALL;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "ENV") != NULL) {
                     board.sensor_type = ENV;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "MOTION") != NULL) {
                     board.sensor_type = MOTION;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
             }
 
@@ -302,40 +306,40 @@ void _handler_cmd(void*, void*, void*) {
             if(strstr(board.command_buffer, "TRIGGER1") != NULL) {
                 if(strstr(board.command_buffer, "ON") != NULL) {
                     board.trigger1.trigger_en = true;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 if(strstr(board.command_buffer, "OFF") != NULL) {
                     board.trigger1.trigger_en = false;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
 
                 if(strstr(board.command_buffer, "SENSOR") != NULL) {
                     if(strstr(board.command_buffer, "TEMPERATURE") != NULL) {
                         board.trigger1.triggered_sensor = TEMPERATURE;
-                        printk("DONE");
+                        printk("DONE\n");
                     }
                     if(strstr(board.command_buffer, "PRESSURE") != NULL) {
                         board.trigger1.triggered_sensor = PRESSURE;
-                        printk("DONE");
+                        printk("DONE\n");
                     }
                     if(strstr(board.command_buffer, "HUMIDITY") != NULL) {
                         board.trigger1.triggered_sensor = HUMIDITY;
-                        printk("DONE");
+                        printk("DONE\n");
                     }
                     if(strstr(board.command_buffer, "ALTITUDE") != NULL) {
                         board.trigger1.triggered_sensor = ALTITUDE;
-                        printk("DONE");
+                        printk("DONE\n");
                     }
                 }
 
                 if(strstr(board.command_buffer, "COMP SUP") != NULL) {
                     board.trigger1.comp = SUP;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
 
                 if(strstr(board.command_buffer, "COMP INF") != NULL) {
                     board.trigger1.comp = INF;
-                    printk("DONE");
+                    printk("DONE\n");
                 }
                 
                 // traitement de la limite dans une commande separee
