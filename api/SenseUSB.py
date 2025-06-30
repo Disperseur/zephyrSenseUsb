@@ -9,7 +9,7 @@ SENSOR_DONE = "DONE\r\n"
 
 STATUS =    ["RUNNING", "STOPPED", "FAULT"]
 MODES =     ["STREAMING", "ONESHOT", "RINGBUFFER"]
-SENSORS =   ["NONE", "TEMPERATURE", "PRESSURE", "HUMIDITY", "ALTITUDE", "ACCELERATION", "GYROSCOPE", "ALL", "ENV", "RINGBUFFER"]
+SENSORS =   ["NONE", "TEMPERATURE", "PRESSURE", "HUMIDITY", "ALTITUDE", "ACCELERATION", "GYROSCOPE", "ALL", "ENV"]
 
 
 class SenseUSB:
@@ -22,6 +22,15 @@ class SenseUSB:
         self.status = "STOPPED"
         self.mode = "STREAMING"
         self.sensors = "ALL"
+
+
+    def decode_line(self):
+        listed_line = self.port.readline().decode().split()
+        for i in range(len(listed_line)):
+            if(i != 1):
+                listed_line[i] = int(listed_line[i])
+
+        return listed_line
         
 
     def wait(self, str, timeout=1000):
@@ -119,10 +128,12 @@ class SenseUSB:
 
 
     def start(self):
+        assert(self.status == "STOPPED")
         self.port.write("START\n".encode())
         assert(self.port.readline().decode() == SENSOR_ACK)
         assert(self.port.readline().decode() == SENSOR_DONE)
-        self.status = "RUNNING"
+        if(self.mode != "ONESHOT"):
+            self.status = "RUNNING"
 
     def stop(self):
         assert(self.status == "RUNNING")
@@ -133,7 +144,25 @@ class SenseUSB:
         
         self.status = "STOPPED"
 
+    def get_data_oneshot(self):
+        output = []
 
+        assert(self.status == "STOPPED")
+        self.set_mode("ONESHOT")
+
+        self.start()
+
+        k = 1
+
+        if(self.sensors == "ALL"): k = 6
+        elif(self.sensors == "ENV"): k = 3
+        else: k = 1
+
+        for j in range(k):
+            # print(self.port.readline().decode().split())
+            output.append(self.decode_line())
+
+        return output
 
     def get_status(self):
         self.port.write("GET STATUS\n".encode())
