@@ -25,6 +25,9 @@ class SenseUSB:
 
 
     def decode_line(self):
+        """
+        A repandre dans les autres fonctions pour plus de proprete
+        """
         listed_line = self.port.readline().decode().split()
         for i in range(len(listed_line)):
             if(i != 1):
@@ -32,7 +35,6 @@ class SenseUSB:
 
         return listed_line
         
-
     def wait(self, str, timeout=1000):
         """
         Waits for str to be given by the sensor
@@ -51,7 +53,6 @@ class SenseUSB:
             sleep(0.001)
         
         return 1
-
 
     def set_mode(self, mode):
         assert(mode in MODES) # le mode choisi doit faire partie des modes possibles
@@ -93,7 +94,6 @@ class SenseUSB:
         assert(type(floor) == int)
         assert(floor > 0) # a voir si on retire ou pas
 
-
         self.port.write(f"SET TRIGGER1 OFF\n".encode())
         assert(self.port.readline().decode() == SENSOR_ACK)
         assert(self.port.readline().decode() == SENSOR_DONE)
@@ -123,9 +123,6 @@ class SenseUSB:
         self.port.write(f"SET TRIGGER1 OFF\n".encode())
         assert(self.port.readline().decode() == SENSOR_ACK)
         assert(self.port.readline().decode() == SENSOR_DONE)
-    
-        
-
 
     def start(self):
         assert(self.status == "STOPPED")
@@ -198,7 +195,6 @@ class SenseUSB:
         # recuperation des mesures
         for i in range(size):
             measure = self.port.readline().decode()[:-1].split()
-            # print(measure)
 
             if(measure[2] in ["ACCEL_LIN", "ACCEL_ROT"]):
                 ringbuffer.append([ int(measure[0]),
@@ -215,7 +211,6 @@ class SenseUSB:
         return ringbuffer
     
 
-    # get trigger1
     def get_trigger1(self):
         self.port.write("GET TRIGGER1\n".encode())
         assert(self.port.readline().decode() == SENSOR_ACK)
@@ -228,84 +223,3 @@ class SenseUSB:
         trigger1[-1] = int(trigger1[-1]) #conversion du seuil du trigger en entier
 
         return trigger1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # def print_data_oneshot(self, sensor, n=1):
-    #     assert(sensor in SENSORS)
-    #     assert(n>=1)
-
-    #     self.set_mode("ONESHOT")
-
-    #     for i in range(n):
-    #         self.port.write(f"GET {sensor}\n".encode())
-    #         k = 1
-
-    #         if(sensor == "ALL"): k = 7
-    #         elif(sensor == "ENV"): k = 3
-    #         elif(sensor == "MOTION"): k = 3
-    #         else: k = 1
-
-
-    #         for j in range(k):
-    #             print(self.port.readline().decode().split())
-
-
-
-    # def get_data_oneshot(self, sensor, n=1):
-    #     assert(sensor in SENSORS)
-    #     assert(n>=1)
-    #     assert(self.status == "RUNNING") # sensor must be started using .start() in order to get data
-    #     assert(self.mode == "ONESHOT") # sensor must be in oneshot mode using .set_mode("ONESHOT")
-
-    #     # self.set_mode("ONESHOT")
-
-    #     output = []
-
-    #     for i in range(n):
-    #         self.port.write(f"GET {sensor}\n".encode())
-    #         k = 1
-
-    #         if(sensor == "ALL"): k = 7
-    #         elif(sensor == "ENV"): k = 3
-    #         elif(sensor == "MOTION"): k = 3
-    #         else: k = 1
-
-
-    #         for j in range(k):
-    #             raw_values_list = self.port.readline().decode().split()
-    #             values_list = [float(raw_values_list[0]), raw_values_list[1], float(raw_values_list[2])]
-
-    #             output.append(values_list)
-
-    #     return output
-    
-
-    # def start_record(self):
-    #     self.port.write("SET MODE LOG\n".encode())
-    #     assert(self.port.readline().decode() == SENSOR_ACK)
-    #     self.start()
-    
-    # def stop_record(self):
-    #     self.stop()
-
-    #  
